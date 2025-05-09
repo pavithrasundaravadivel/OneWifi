@@ -3062,8 +3062,7 @@ bus_error_t get_ap_config_status(char *name, raw_data_t *p_data, bus_user_data_t
     int rc = bus_error_success;
     unsigned int idx = 0, vap_idx = 0, radio_idx = 0;
     wifi_mgr_t *mgr = (wifi_mgr_t *)get_wifimgr_obj();
-    wifi_ctrl_t *ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
-    raw_data_t rdata;
+//    wifi_ctrl_t *ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
 
     if (mgr == NULL) {
         wifi_util_dbg_print(WIFI_CTRL, "%s:%d NULL Pointer \n", __func__, __LINE__);
@@ -3075,20 +3074,22 @@ bus_error_t get_ap_config_status(char *name, raw_data_t *p_data, bus_user_data_t
         return bus_error_invalid_input;
     }
 
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Event came %s\n", __func__, __LINE__, name);
     if (strstr(name, "ConfigStatus")) {
 	rc = sscanf(name, "Device.Wifi.AccessPoint.%d.ConfigStatus", &idx);
 	vap_idx = idx - 1;
 	if (rc == 1 && vap_idx >= 0 && vap_idx <= MAX_VAP) {
              radio_idx = get_radio_index_for_vap_index(&mgr->hal_cap.wifi_prop, vap_idx);
-	     rdata.data_type = bus_data_type_uint32;
-             rdata.raw_data.u32 = (unsigned int)mgr->radio_config[radio_idx].vaps.rdk_vap_array[vap_idx].webconfig_apply_status;
+	     p_data->data_type = bus_data_type_uint32;
+             p_data->raw_data.u32 = (unsigned int)mgr->radio_config[radio_idx].vaps.rdk_vap_array[vap_idx].webconfig_apply_status;
              wifi_util_dbg_print(WIFI_CTRL, "%s:%d The AccessPoint apply status is %d\n", __func__, __LINE__,
-       rdata.raw_data.u32);
-	     rc = get_bus_descriptor()->bus_set_fn(&ctrl->handle, name, &rdata);
+       p_data->raw_data.u32);
+	    /* rc = get_bus_descriptor()->bus_event_publish_fn(&ctrl->handle, name, p_data);
 	     if (rc != bus_error_success) {
-		     wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d failed to set data %d\n", __func__, __LINE__, rdata.raw_data.u32);
+		     wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d failed to set data %d\n", __func__, __LINE__, p_data->raw_data.u32);
 		     return RETURN_ERR;
 	     }
+	     */
 	}
     }
     return bus_error_success;
