@@ -600,6 +600,12 @@ typedef struct {
     wifi_global_param_t global_parameters;
 } __attribute__((packed)) wifi_global_config_t;
 
+typedef enum {
+    webconfig_apply_status_inprogress,
+    webconfig_apply_status_success,
+    webconfig_apply_status_failure
+} webconfig_apply_status_t;
+
 typedef struct {
     wifi_vap_name_t         vap_name;
     UINT                    vap_index;
@@ -614,6 +620,7 @@ typedef struct {
     int                     anqp_request_count;
     int                     anqp_response_count;
     bool                    force_apply;
+    webconfig_apply_status_t                  webconfig_apply_status;
 } rdk_wifi_vap_info_t;
 
 typedef struct {

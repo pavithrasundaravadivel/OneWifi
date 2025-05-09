@@ -706,14 +706,6 @@ int webconfig_hal_vap_apply_by_name(wifi_ctrl_t *ctrl, webconfig_subdoc_decoded_
     rdk_wifi_vap_info_t *mgr_rdk_vap_info, *rdk_vap_info;
     rdk_wifi_vap_info_t tgt_rdk_vap_info;
     int ret = 0;
-    raw_data_t rdata;
-    char cmd[128] = { 0 };
-    bus_error_t status;
-
-    if (ctrl == NULL) {
-        wifi_util_error_print(WIFI_CTRL, "%s:%d NULL pointers\n", __func__, __LINE__);
-        return RETURN_ERR;
-    }
 
     for (i = 0; i < size; i++) {
 
@@ -845,40 +837,21 @@ int webconfig_hal_vap_apply_by_name(wifi_ctrl_t *ctrl, webconfig_subdoc_decoded_
 
             start_wifi_sched_timer(vap_info->vap_index, ctrl, wifi_vap_sched);
 
-            memset(&rdata, 0, sizeof(raw_data_t));
-            rdata.data_type = bus_data_type_uint32;
-            rdata.raw_data.u32 = 0; // Denotes config in progress
-
-            snprintf(cmd, sizeof(cmd), "Device.Wifi.AccessPoint.%d.ConfigStatus", tgt_vap_index + 1);
-	    wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d Setting data as inprogress for %s\n", __func__, __LINE__, cmd);
-            status = get_bus_descriptor()->bus_set_fn(&ctrl->handle, cmd, &rdata);
-	    if (status != bus_error_success) {
-		    wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d failed to set data %d\n", __func__, __LINE__, rdata.raw_data.u32);
-		    return RETURN_ERR;
-	    }
-
+	    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Setting the ConfigStatus as inprogress for vap_index %d\n", __func__, __LINE__, tgt_vap_index);
+            mgr->radio_config[tgt_radio_idx].vaps.rdk_vap_array[tgt_vap_index].webconfig_apply_status = webconfig_apply_status_inprogress;
             if (svc->update_fn(svc, tgt_radio_idx, p_tgt_vap_map, &tgt_rdk_vap_info) != RETURN_OK) {
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: failed to apply\n", __func__,
                     __LINE__);
                 stop_wifi_sched_timer(vap_info->vap_index, ctrl, wifi_vap_sched);
                 free(p_tgt_vap_map);
                 p_tgt_vap_map = NULL;
-                rdata.raw_data.u32 = 2; // Denotes config apply failed
-		wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d Setting data as failed\n", __func__, __LINE__);
-                status = get_bus_descriptor()->bus_set_fn(&ctrl->handle, cmd, &rdata);
-		if (status != bus_error_success) {
-                    wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d failed to set data %d\n", __func__, __LINE__, rdata.raw_data.u32);
-                }
+		wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Setting the ConfigStatus as failure for vap_index %d\n", __func__, __LINE__, tgt_vap_index);
+                mgr->radio_config[tgt_radio_idx].vaps.rdk_vap_array[tgt_vap_index].webconfig_apply_status = webconfig_apply_status_failure;
                 return RETURN_ERR;
             }
 
-            rdata.raw_data.u32 = 1; // Denotes config apply success
-	    wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d Setting data as success\n", __func__, __LINE__);
-            status = get_bus_descriptor()->bus_set_fn(&ctrl->handle, cmd, &rdata);
-	    if (status != bus_error_success) {
-                    wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d failed to set data %d\n", __func__, __LINE__, rdata.raw_data.u32);
-                    return RETURN_ERR;
-            }
+	    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Setting the ConfigStatus as success for vap_index %d\n", __func__, __LINE__, tgt_vap_index);
+            mgr->radio_config[tgt_radio_idx].vaps.rdk_vap_array[tgt_vap_index].webconfig_apply_status = webconfig_apply_status_success;
 
             memset(update_status, 0, sizeof(update_status));
             snprintf(update_status, sizeof(update_status), "%s %s", vap_names[i], (ret == RETURN_OK)?"success":"fail");

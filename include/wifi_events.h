@@ -193,7 +193,6 @@ typedef enum {
     wifi_event_monitor_get_radio_temperature,
     wifi_event_monitor_set_subscribe,
     wifi_event_monitor_action_frame,
-    wifi_event_monitor_webconfig_status,
     wifi_event_monitor_max,
 
     // Tunnel

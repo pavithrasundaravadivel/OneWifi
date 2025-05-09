@@ -2015,8 +2015,6 @@ bus_error_t eventSubHandler(char *eventName, bus_event_sub_action_t action,
     events_bus_data_t *events_bus_data = &(ctrl->events_bus_data);
     wifi_monitor_data_t *data = NULL;
     const char *wifi_log = "/rdklogs/logs/WiFilog.txt.0";
-    bus_error_t rc;
-    raw_data_t rdata;
 
     pthread_mutex_lock(&events_bus_data->events_bus_lock);
     event = events_getEventElement((char *)eventName);
@@ -2289,39 +2287,6 @@ bus_error_t eventSubHandler(char *eventName, bus_event_sub_action_t action,
                 }
             }
             break;
-        case wifi_event_monitor_webconfig_status:
-            idx = event->idx;
-            if (action == bus_event_action_subscribe) {
-                event->num_subscribers++;
-                event->subscribed = TRUE;
-                rc = get_bus_descriptor()->bus_data_get_fn(&ctrl->handle, eventName, &rdata);
-                if (rdata.data_type != bus_data_type_uint32) {
-                    wifi_util_error_print(WIFI_CTRL,
-                        "%s:%d bus_data_get_fn failed with data_type:0x%x, rc:%\n", __func__,
-                        __LINE__, rdata.data_type, rc);
-                    return bus_error_invalid_input;
-                }
-
-                if (rc != bus_error_success) {
-                    wifi_util_dbg_print(WIFI_CTRL,
-                        "%s: %d bus_data_get_fn failed for %s with error %d\n", __func__, __LINE__,
-                        eventName, rc);
-                    return bus_error_invalid_input;
-                }
-                wifi_util_dbg_print(WIFI_CTRL, "%s:%d The AccessPoint apply status is %d\n",
-                    __func__, __LINE__, rdata.raw_data.u32);
-                rc = get_bus_descriptor()->bus_event_publish_fn(&ctrl->handle, eventName, &rdata);
-                if (rc != bus_error_success) {
-                    wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d failed to publish data %d\n",
-                        __func__, __LINE__, rdata.raw_data.u32);
-                    return RETURN_ERR;
-                }
-            } else {
-                event->num_subscribers--;
-                event->subscribed = FALSE;
-            }
-            break;
-
         default:
             wifi_util_dbg_print(WIFI_CTRL, "%s(): Invalid event type\n", __FUNCTION__);
             break;
@@ -2562,16 +2527,6 @@ bus_error_t ap_table_addrowhandler(char const *tableName, char const *aliasName,
         sprintf(event->name, "Device.WiFi.AccessPoint.%d.RawFrame.Mgmt.Action.Rx", *instNum);
         event->idx = vap_index;
         event->type = wifi_event_monitor_action_frame;
-        event->subscribed = FALSE;
-        event->num_subscribers = 0;
-        queue_push(ctrl->events_bus_data.events_bus_queue, event);
-    }
-
-    event = (event_bus_element_t *)malloc(sizeof(event_bus_element_t));
-    if (event != NULL) {
-        sprintf(event->name, "Device.WiFi.AccessPoint.%d.ConfigStatus", *instNum);
-        event->idx = vap_index;
-        event->type = wifi_event_monitor_webconfig_status;
         event->subscribed = FALSE;
         event->num_subscribers = 0;
         queue_push(ctrl->events_bus_data.events_bus_queue, event);
@@ -3102,12 +3057,15 @@ bus_error_t set_force_vap_apply(char *name, raw_data_t *p_data, bus_user_data_t 
     return bus_error_invalid_input;
 }
 
-/*bus_error_t get_ap_config_status(char *name, raw_data_t *p_data, bus_user_data_t *user_data)
+bus_error_t get_ap_config_status(char *name, raw_data_t *p_data, bus_user_data_t *user_data)
 {
     int rc = bus_error_success;
-
+    unsigned int idx = 0, vap_idx = 0, radio_idx = 0;
+    wifi_mgr_t *mgr = (wifi_mgr_t *)get_wifimgr_obj();
     wifi_ctrl_t *ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
-    if (ctrl == NULL) {
+    raw_data_t rdata;
+
+    if (mgr == NULL) {
         wifi_util_dbg_print(WIFI_CTRL, "%s:%d NULL Pointer \n", __func__, __LINE__);
         return bus_error_invalid_input;
     }
@@ -3118,26 +3076,24 @@ bus_error_t set_force_vap_apply(char *name, raw_data_t *p_data, bus_user_data_t 
     }
 
     if (strstr(name, "ConfigStatus")) {
-        rc = get_bus_descriptor()->bus_data_get_fn(&ctrl->handle, name, p_data);
-        if (p_data->data_type != bus_data_type_uint32) {
-            wifi_util_error_print(WIFI_CTRL,
-                "%s:%d bus_data_get_fn failed with data_type:0x%x, rc:%\n", __func__, __LINE__,
-                p_data->data_type, rc);
-            return bus_error_invalid_input;
-        }
-
-        if (rc != bus_error_success) {
-            wifi_util_dbg_print(WIFI_CTRL, "%s: %d bus_data_get_fn failed for %s with error %d\n",
-                __func__, __LINE__, name, rc);
-            return bus_error_invalid_input;
-        }
+	rc = sscanf(name, "Device.Wifi.AccessPoint.%d.ConfigStatus", &idx);
+	vap_idx = idx - 1;
+	if (rc == 1 && vap_idx >= 0 && vap_idx <= MAX_VAP) {
+             radio_idx = get_radio_index_for_vap_index(&mgr->hal_cap.wifi_prop, vap_idx);
+	     rdata.data_type = bus_data_type_uint32;
+             rdata.raw_data.u32 = (unsigned int)mgr->radio_config[radio_idx].vaps.rdk_vap_array[vap_idx].webconfig_apply_status;
+             wifi_util_dbg_print(WIFI_CTRL, "%s:%d The AccessPoint apply status is %d\n", __func__, __LINE__,
+       rdata.raw_data.u32);
+	     rc = get_bus_descriptor()->bus_set_fn(&ctrl->handle, name, &rdata);
+	     if (rc != bus_error_success) {
+		     wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d failed to set data %d\n", __func__, __LINE__, rdata.raw_data.u32);
+		     return RETURN_ERR;
+	     }
+	}
     }
-    wifi_util_dbg_print(WIFI_CTRL, "%s:%d The AccessPoint apply status is %d\n", __func__, __LINE__,
-        p_data->raw_data.u32);
-
     return bus_error_success;
 }
-*/
+
 void bus_register_handlers(wifi_ctrl_t *ctrl)
 {
     int rc = bus_error_success;
@@ -3242,8 +3198,8 @@ void bus_register_handlers(wifi_ctrl_t *ctrl)
                                 { WIFI_CLIENT_GET_ASSOC_REQ,bus_element_type_method,
                                     { NULL, NULL, NULL, NULL, NULL, get_client_assoc_request_multi}, slow_speed, ZERO_TABLE,
                                     { bus_data_type_bytes, true, 0, 0, 0, NULL } },
-				{ WIFI_ACCESSPOINT_CONFIG_STATUS, bus_element_type_event,
-                                    { NULL, NULL, NULL, NULL, eventSubHandler, NULL }, slow_speed, ZERO_TABLE,
+				{ WIFI_ACCESSPOINT_CONFIG_STATUS, bus_element_type_method,
+                                    { get_ap_config_status, NULL, NULL, NULL, NULL, NULL }, slow_speed, ZERO_TABLE,
                                     {  bus_data_type_uint32, false, 0, 0, 0, NULL } },
                                 { WIFI_COLLECT_STATS_TABLE, bus_element_type_table,
                                     { NULL, NULL, stats_table_addrowhandler, stats_table_removerowhandler, NULL, NULL}, slow_speed, num_of_radio,
@@ -3278,7 +3234,6 @@ void bus_register_handlers(wifi_ctrl_t *ctrl)
                                 { WIFI_COLLECT_STATS_ASSOC_DEVICE_STATS, bus_element_type_event,
                                     { NULL, NULL, NULL, NULL, eventSubHandler, NULL}, slow_speed, ZERO_TABLE,
                                     { bus_data_type_bytes, false, 0, 0, 0, NULL } }
-
     };
 
     rc = get_bus_descriptor()->bus_open_fn(&ctrl->handle, component_name);
