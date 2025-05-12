@@ -835,10 +835,10 @@ int webconfig_hal_vap_apply_by_name(wifi_ctrl_t *ctrl, webconfig_subdoc_decoded_
             memset(&tgt_rdk_vap_info, 0, sizeof(rdk_wifi_vap_info_t));
             memcpy(&tgt_rdk_vap_info, rdk_vap_info, sizeof(rdk_wifi_vap_info_t));
 
+	    wifi_util_dbg_print(WIFI_CTRL, "%s:%d start sched called for %d and target index is %d\n", __func__, __LINE__, vap_info->vap_index, tgt_vap_index);
+
             start_wifi_sched_timer(vap_info->vap_index, ctrl, wifi_vap_sched);
 
-	    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Setting the ConfigStatus as inprogress for vap_index %d\n", __func__, __LINE__, tgt_vap_index);
-            mgr->radio_config[tgt_radio_idx].vaps.rdk_vap_array[tgt_vap_index].webconfig_apply_status = webconfig_apply_status_inprogress;
             if (svc->update_fn(svc, tgt_radio_idx, p_tgt_vap_map, &tgt_rdk_vap_info) != RETURN_OK) {
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: failed to apply\n", __func__,
                     __LINE__);
@@ -847,11 +847,9 @@ int webconfig_hal_vap_apply_by_name(wifi_ctrl_t *ctrl, webconfig_subdoc_decoded_
                 p_tgt_vap_map = NULL;
 		wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Setting the ConfigStatus as failure for vap_index %d\n", __func__, __LINE__, tgt_vap_index);
                 mgr->radio_config[tgt_radio_idx].vaps.rdk_vap_array[tgt_vap_index].webconfig_apply_status = webconfig_apply_status_failure;
+		wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as failure for vap %d\n", __func__, __LINE__, tgt_vap_index);
                 return RETURN_ERR;
             }
-
-	    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Setting the ConfigStatus as success for vap_index %d\n", __func__, __LINE__, tgt_vap_index);
-            mgr->radio_config[tgt_radio_idx].vaps.rdk_vap_array[tgt_vap_index].webconfig_apply_status = webconfig_apply_status_success;
 
             memset(update_status, 0, sizeof(update_status));
             snprintf(update_status, sizeof(update_status), "%s %s", vap_names[i], (ret == RETURN_OK)?"success":"fail");
@@ -887,6 +885,8 @@ int webconfig_hal_vap_apply_by_name(wifi_ctrl_t *ctrl, webconfig_subdoc_decoded_
         } else {
             wifi_util_info_print(WIFI_WEBCONFIG, "%s:%d: Received vap config is same for %s, not applying\n",
                         __func__, __LINE__, vap_names[i]);
+	    mgr->radio_config[tgt_radio_idx].vaps.rdk_vap_array[tgt_vap_index].webconfig_apply_status = webconfig_apply_status_success;
+	    wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as success for vap %d\n", __func__, __LINE__, tgt_vap_index);
         }
     }
 
@@ -1851,6 +1851,8 @@ int webconfig_hal_radio_apply(wifi_ctrl_t *ctrl, webconfig_subdoc_decoded_data_t
             if (ret != RETURN_OK) {
                 wifi_util_error_print(WIFI_MGR, "%s:%d: failed to apply\n", __func__, __LINE__);
                 ctrl->webconfig_state |= ctrl_webconfig_state_radio_cfg_rsp_pending;
+		mgr->radio_config[mgr_radio_data->vaps.radio_index].webconfig_apply_status_radio = webconfig_apply_status_failure;
+        	wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as failure for radio %d\n", __func__, __LINE__, mgr_radio_data->vaps.radio_index);
                 return RETURN_ERR;
             }
 
@@ -1889,6 +1891,8 @@ int webconfig_hal_radio_apply(wifi_ctrl_t *ctrl, webconfig_subdoc_decoded_data_t
             }
         } else {
             wifi_util_info_print(WIFI_MGR, "%s:%d: Received radio config for radio %u is same, not applying\n", __func__, __LINE__, mgr_radio_data->vaps.radio_index);
+	    mgr->radio_config[mgr_radio_data->vaps.radio_index].webconfig_apply_status_radio = webconfig_apply_status_success;
+            wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as success for radio %d\n", __func__, __LINE__, mgr_radio_data->vaps.radio_index);
         }
     }
     return RETURN_OK;

@@ -238,6 +238,7 @@ typedef struct wifi_ctrl {
     wifiapi_t           wifiapi;
     wifi_rfc_dml_parameters_t    rfc_params;
     unsigned int        sta_tree_instance_num;
+    unsigned int        radio_tree_instance_num;
     vap_svc_t           ctrl_svc[vap_svc_type_max];
     wifi_apps_mgr_t      apps_mgr;
     rdk_dev_mode_type_t  network_mode; /* 0 - gateway, 1 - extender */

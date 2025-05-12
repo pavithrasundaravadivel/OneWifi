@@ -77,6 +77,8 @@ extern "C" {
 #define WIFI_COLLECT_STATS_VAP_TABLE                   "Device.WiFi.CollectStats.AccessPoint.{i}."
 #define WIFI_COLLECT_STATS_ASSOC_DEVICE_STATS          "Device.WiFi.CollectStats.AccessPoint.{i}.AssociatedDeviceStats"
 #define WIFI_NOTIFY_DENY_TCM_ASSOCIATION               "Device.WiFi.ConnectionControl.TcmClientDenyAssociation"
+#define WIFI_RADIO_CONFIG_TABLE                        "Device.WiFi.Radio.{i}."
+#define WIFI_RADIO_CONFIG_STATUS                       "Device.WiFi.Radio.{i}.ConfigStatus"
 #define WIFI_STUCK_DETECT_FILE_NAME         "/nvram/wifi_stuck_detect"
 
 #define PLAN_ID_LENGTH     38
@@ -793,6 +795,7 @@ typedef struct {
     rdk_wifi_vap_map_t          vaps;
     wifi_radio_feature_param_t  feature;
     radarInfo_t                  radarInfo;
+    webconfig_apply_status_t     webconfig_apply_status_radio;
 //  schema_wifi_radio_state_t   radio_state;
 } rdk_wifi_radio_t;
 

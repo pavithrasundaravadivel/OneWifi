@@ -3459,6 +3459,72 @@ void update_subdoc_data(webconfig_subdoc_data_t *data, unsigned int num_ssid,
     }
 }
 
+static void update_webconfig_status(webconfig_subdoc_type_t subdoc_type)
+{
+    unsigned int ap_index;
+    unsigned int radio_index;
+    wifi_mgr_t *mgr = get_wifimgr_obj();
+
+    if (mgr == NULL) {
+        wifi_util_error_print(WIFI_CTRL, "%s %d Mgr is NULL\n", __func__, __LINE__);
+        return;
+    }
+
+    switch (subdoc_type) {
+    case webconfig_subdoc_type_private:
+        // find its index and update as inprogress
+        for (UINT index = 0; index < getTotalNumberVAPs(); index++) {
+            ap_index = VAP_INDEX(mgr->hal_cap, index);
+            if (isVapPrivate(ap_index)) {
+                radio_index = get_radio_index_for_vap_index(&mgr->hal_cap.wifi_prop, ap_index);
+                mgr->radio_config[radio_index].vaps.rdk_vap_array[ap_index].webconfig_apply_status =
+                    webconfig_apply_status_inprogress;
+                wifi_util_dbg_print(WIFI_CTRL,
+                    "%s:%d: Setting the status as inprogress for vap %d\n", __func__, __LINE__,
+                    ap_index);
+            }
+        }
+
+        break;
+    case webconfig_subdoc_type_home:
+        for (UINT index = 0; index < getTotalNumberVAPs(); index++) {
+            ap_index = VAP_INDEX(mgr->hal_cap, index);
+            if (isVapXhs(ap_index)) {
+                radio_index = get_radio_index_for_vap_index(&mgr->hal_cap.wifi_prop, ap_index);
+                mgr->radio_config[radio_index].vaps.rdk_vap_array[ap_index].webconfig_apply_status =
+                    webconfig_apply_status_inprogress;
+                wifi_util_dbg_print(WIFI_CTRL,
+                    "%s:%d: Setting the status as inprogress for vap %d\n", __func__, __LINE__,
+                    ap_index);
+            }
+        }
+        break;
+    case webconfig_subdoc_type_xfinity:
+        for (UINT index = 0; index < getTotalNumberVAPs(); index++) {
+            ap_index = VAP_INDEX(mgr->hal_cap, index);
+            if (isVapHotspot(ap_index)) {
+                radio_index = get_radio_index_for_vap_index(&mgr->hal_cap.wifi_prop, ap_index);
+                mgr->radio_config[radio_index].vaps.rdk_vap_array[ap_index].webconfig_apply_status =
+                    webconfig_apply_status_inprogress;
+                wifi_util_dbg_print(WIFI_CTRL,
+                    "%s:%d: Setting the status as inprogress for vap %d\n", __func__, __LINE__,
+                    ap_index);
+            }
+        }
+        break;
+    case webconfig_subdoc_type_radio:
+        for (UINT index = 0; index < getNumberRadios(); index++) {
+            mgr->radio_config[index].webconfig_apply_status_radio =
+                webconfig_apply_status_inprogress;
+            wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as inprogress for radio %d\n",
+                __func__, __LINE__, index);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 void handle_webconfig_event(wifi_ctrl_t *ctrl, const char *raw, unsigned int len,
     wifi_event_subtype_t subtype)
 {
@@ -3520,6 +3586,8 @@ void handle_webconfig_event(wifi_ctrl_t *ctrl, const char *raw, unsigned int len
             update_subdoc_data(&data, num_ssid, vap_names);
         }
 
+        // Update the webconfig status to inprogress
+        update_webconfig_status(subdoc_type);
         apps_mgr_analytics_event(&ctrl->apps_mgr, wifi_event_type_webconfig, subtype, NULL);
         webconfig_decode(config, &data, raw);
         wifi_event = (wifi_event_t *)malloc(sizeof(wifi_event_t));
