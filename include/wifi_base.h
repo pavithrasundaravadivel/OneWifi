@@ -55,6 +55,7 @@ extern "C" {
 #define WIFI_ACCESSPOINT_DEV_DISCONNECTED   "Device.WiFi.AccessPoint.{i}.X_RDK_deviceDisconnected"
 #define WIFI_ACCESSPOINT_DEV_DEAUTH         "Device.WiFi.AccessPoint.{i}.X_RDK_deviceDeauthenticated"
 #define WIFI_ACCESSPOINT_DIAGDATA           "Device.WiFi.AccessPoint.{i}.X_RDK_DiagData"
+#define WIFI_ACCESSPOINT_CONFIG_STATUS      "Device.WiFi.AccessPoint.{i}.ConfigStatus"
 #define WIFI_ACCESSPOINT_FORCE_APPLY        "Device.WiFi.AccessPoint.{i}.ForceApply"
 #define WIFI_ACCESSPOINT_RADIUS_CONNECTED_ENDPOINT   "Device.WiFi.AccessPoint.{i}.Security.ConnectedRadiusEndpoint"
 #define WIFI_ACCESSPOINT_RAWFRAME_MGMT_ACTION_TX     "Device.WiFi.AccessPoint.{i}.RawFrame.Mgmt.Action.Tx"
@@ -76,6 +77,8 @@ extern "C" {
 #define WIFI_COLLECT_STATS_VAP_TABLE                   "Device.WiFi.CollectStats.AccessPoint.{i}."
 #define WIFI_COLLECT_STATS_ASSOC_DEVICE_STATS          "Device.WiFi.CollectStats.AccessPoint.{i}.AssociatedDeviceStats"
 #define WIFI_NOTIFY_DENY_TCM_ASSOCIATION               "Device.WiFi.ConnectionControl.TcmClientDenyAssociation"
+#define WIFI_RADIO_CONFIG_TABLE                        "Device.WiFi.Radio.{i}."
+#define WIFI_RADIO_CONFIG_STATUS                       "Device.WiFi.Radio.{i}.ConfigStatus"
 #define WIFI_STUCK_DETECT_FILE_NAME         "/nvram/wifi_stuck_detect"
 
 #define PLAN_ID_LENGTH     38
@@ -599,6 +602,12 @@ typedef struct {
     wifi_global_param_t global_parameters;
 } __attribute__((packed)) wifi_global_config_t;
 
+typedef enum {
+    webconfig_apply_status_success,
+    webconfig_apply_status_failure,
+    webconfig_apply_status_inprogress
+} webconfig_apply_status_t;
+
 typedef struct {
     wifi_vap_name_t         vap_name;
     UINT                    vap_index;
@@ -613,6 +622,7 @@ typedef struct {
     int                     anqp_request_count;
     int                     anqp_response_count;
     bool                    force_apply;
+    webconfig_apply_status_t                  config_status;
 } rdk_wifi_vap_info_t;
 
 typedef struct {
@@ -785,6 +795,7 @@ typedef struct {
     rdk_wifi_vap_map_t          vaps;
     wifi_radio_feature_param_t  feature;
     radarInfo_t                  radarInfo;
+    webconfig_apply_status_t     config_status;
 //  schema_wifi_radio_state_t   radio_state;
 } rdk_wifi_radio_t;
 

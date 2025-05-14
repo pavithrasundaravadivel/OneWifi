@@ -1856,35 +1856,53 @@ void resched_data_to_ctrl_queue()
 int wifi_sched_timeout(void *arg)
 {
     int *handler_id;
+    unsigned int radio_index;
     wifi_ctrl_t *l_ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
-    wifi_scheduler_id_t  *sched_id = &l_ctrl->wifi_sched_id;
+    wifi_scheduler_id_t *sched_id = &l_ctrl->wifi_sched_id;
     wifi_scheduler_id_arg_t *args = (wifi_scheduler_id_arg_t *)arg;
+    wifi_mgr_t *mgr = (wifi_mgr_t *)get_wifimgr_obj();
 
     if (args == NULL) {
         return TIMER_TASK_ERROR;
     }
 
-    switch(args->type) {
-        case wifi_csa_sched:
-            handler_id = sched_id->wifi_csa_sched_handler_id;
-            break;
-        case wifi_radio_sched:
-            handler_id = sched_id->wifi_radio_sched_handler_id;
-            break;
-        case wifi_vap_sched:
-            handler_id = sched_id->wifi_vap_sched_handler_id;
-            break;
-        case wifi_acs_sched:
-            handler_id = sched_id->wifi_acs_sched_handler_id;
-            break;
-        default:
-            free(args);
-            wifi_util_error_print(WIFI_CTRL, "%s:%d: wifi index:%d invalid type:%d\n", __func__, __LINE__, args->index, args->type);
-            return TIMER_TASK_ERROR;
+    switch (args->type) {
+    case wifi_csa_sched:
+        handler_id = sched_id->wifi_csa_sched_handler_id;
+        break;
+    case wifi_radio_sched:
+        handler_id = sched_id->wifi_radio_sched_handler_id;
+        if (mgr->radio_config[args->index].config_status ==
+            webconfig_apply_status_inprogress) {
+            mgr->radio_config[args->index].config_status =
+                webconfig_apply_status_failure;
+            wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as failure for radio %d\n",
+                __func__, __LINE__, args->index);
+        }
+        break;
+    case wifi_vap_sched:
+        handler_id = sched_id->wifi_vap_sched_handler_id;
+        radio_index = get_radio_index_for_vap_index(&mgr->hal_cap.wifi_prop, args->index);
+        if (mgr->radio_config[radio_index].vaps.rdk_vap_array[args->index].config_status ==
+            webconfig_apply_status_inprogress) {
+            mgr->radio_config[radio_index].vaps.rdk_vap_array[args->index].config_status =
+                webconfig_apply_status_failure;
+            wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as failure for vap_array %d of radio %d\n",
+                __func__, __LINE__, args->index, radio_index);
+        }
+        break;
+    case wifi_acs_sched:
+        handler_id = sched_id->wifi_acs_sched_handler_id;
+        break;
+    default:
+        free(args);
+        wifi_util_error_print(WIFI_CTRL, "%s:%d: wifi index:%d invalid type:%d\n", __func__,
+            __LINE__, args->index, args->type);
+        return TIMER_TASK_ERROR;
     }
 
-    wifi_util_info_print(WIFI_CTRL,"%s:%d - wifi index:%d type:%d scheduler timeout\r\n",
-                                    __func__, __LINE__, args->index, args->type);
+    wifi_util_info_print(WIFI_CTRL, "%s:%d - wifi index:%d type:%d scheduler timeout\r\n", __func__,
+        __LINE__, args->index, args->type);
     handler_id[args->index] = 0;
 
     if (args->type == wifi_csa_sched) {
