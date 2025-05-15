@@ -2751,22 +2751,6 @@ static bus_error_t radioTable_addrowhandler(char const *tableName, char const *a
     wifi_util_dbg_print(WIFI_CTRL, "%s:%d instance_num:%d\r\n", __func__, __LINE__,
         ctrl->radio_tree_instance_num);
 
-/*    if (ctrl->radio_tree_instance_num == 1) {
-	    for (unsigned int num_radio = 0; num_radio < getNumberRadios(); num_radio++) {
-		    mgr->radio_config[num_radio].config_status = webconfig_apply_status_success;
-		    for (unsigned int num_vap = 0; num_vap < getNumberVAPsPerRadio(num_radio); num_vap++) {
-			    mgr->radio_config[num_radio].vaps.rdk_vap_array[num_vap].config_status = webconfig_apply_status_success;
-		        }
-	    }
-
-	    for (unsigned int num_radio = 0; num_radio < getNumberRadios(); num_radio++) {
-		    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Radio Index %d status %d\n", __func__, __LINE__, num_radio, mgr->radio_config[num_radio].config_status);
-		        for (unsigned int num_vap = 0; num_vap < getNumberVAPsPerRadio(num_radio); num_vap++) {
-			    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Vap index %d status %d\n", __func__, __LINE__, num_vap, mgr->radio_config[num_radio].vaps.rdk_vap_array[num_vap].config_status);
-		        }
-	    }
-    }
-*/
     return bus_error_success;
 }
 
