@@ -1302,13 +1302,16 @@ webconfig_error_t decode_security_object(const cJSON *security, wifi_vap_securit
         security_info->encr = wifi_encryption_aes;
     } else if(strcmp(param->valuestring, "AES+TKIP") == 0) {
         security_info->encr = wifi_encryption_aes_tkip;
+    } else if(strcmp(param->valuestring, "AES+GCMP") == 0) {
+        security_info->encr = wifi_encryption_aes_gcmp256;
     } else {
         wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d failed to decode encryption method: %s\n",
             __func__, __LINE__, param->valuestring);
         return webconfig_error_decode;
     }
 
-    if (security_info->encr != wifi_encryption_aes &&
+    if ((security_info->encr != wifi_encryption_aes &&
+        security_info->encr != wifi_encryption_aes_gcmp256) &&
         (security_info->mode == wifi_security_mode_enhanced_open ||
         security_info->mode == wifi_security_mode_wpa3_enterprise ||
         security_info->mode == wifi_security_mode_wpa3_personal)) {
@@ -1521,6 +1524,26 @@ webconfig_error_t decode_vap_common_object(const cJSON *vap, wifi_vap_info_t *va
     // Broadcast SSID
     decode_param_bool(vap, "SSIDAdvertisementEnabled", param);
     vap_info->u.bss_info.showSsid = (param->type & cJSON_True) ? true : false;
+
+    // MLD Enable
+    decode_param_bool(vap, "MLD_Enable", param);
+    vap_info->u.bss_info.mld_info.common_info.mld_enable = (param->type & cJSON_True) ? true:false;
+
+    // MLD Apply
+    decode_param_bool(vap, "MLD_Apply", param);
+    vap_info->u.bss_info.mld_info.common_info.mld_apply = (param->type & cJSON_True) ? true:false;
+
+    // MLD_ID
+    decode_param_integer(vap, "MLD_ID", param);
+    vap_info->u.bss_info.mld_info.common_info.mld_id = param->valuedouble;
+
+    // MLD_Link_ID
+    decode_param_integer(vap, "MLD_Link_ID", param);
+    vap_info->u.bss_info.mld_info.common_info.mld_link_id = param->valuedouble;
+
+    // MLD_Addr
+    decode_param_string(vap, "MLD_Addr", param);
+    string_mac_to_uint8_mac(vap_info->u.bss_info.mld_info.common_info.mld_addr, param->valuestring);
 
     // Isolation
     decode_param_bool(vap, "IsolationEnable", param);
@@ -2418,7 +2441,7 @@ int validate_wifi_hw_variant(wifi_freq_bands_t radio_band, wifi_ieee80211Variant
         MASK_BITSET(wifi_hw_mode, WIFI_80211_VARIANT_B);
         MASK_BITSET(wifi_hw_mode, WIFI_80211_VARIANT_G);
         MASK_BITSET(wifi_hw_mode, WIFI_80211_VARIANT_N);
-#if !defined (_PP203X_PRODUCT_REQ_) && !defined(_GREXT02ACTS_PRODUCT_REQ_)
+#if !defined (_PP203X_PRODUCT_REQ_)
         MASK_BITSET(wifi_hw_mode, WIFI_80211_VARIANT_AX);
 #endif
 #ifdef CONFIG_IEEE80211BE
@@ -2434,7 +2457,7 @@ int validate_wifi_hw_variant(wifi_freq_bands_t radio_band, wifi_ieee80211Variant
         MASK_BITSET(wifi_hw_mode, WIFI_80211_VARIANT_N);
         MASK_BITSET(wifi_hw_mode, WIFI_80211_VARIANT_H);
         MASK_BITSET(wifi_hw_mode, WIFI_80211_VARIANT_AC);
-#if !defined (_PP203X_PRODUCT_REQ_) && !defined(_GREXT02ACTS_PRODUCT_REQ_)
+#if !defined (_PP203X_PRODUCT_REQ_)
         MASK_BITSET(wifi_hw_mode, WIFI_80211_VARIANT_AX);
 #endif
 #ifdef CONFIG_IEEE80211BE
