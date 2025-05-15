@@ -430,8 +430,9 @@ void callback_Wifi_Radio_Config(ovsdb_update_monitor_t *mon,
         wifi_util_dbg_print(WIFI_DB,"%s:%d: Wifi_Radio_Config data enabled=%d freq_band=%d auto_channel_enabled=%d channel=%d  channel_width=%d hw_mode=%d csa_beacon_count=%d country=%d OperatingEnviroment=%d dcs_enabled=%d numSecondaryChannels=%d channelSecondary=%s dtim_period %d beacon_interval %d operating_class %d basic_data_transmit_rate %d operational_data_transmit_rate %d  fragmentation_threshold %d guard_interval %d transmit_power %d rts_threshold %d factory_reset_ssid = %d, radio_stats_measuring_rate = %d, radio_stats_measuring_interval = %d, cts_protection %d, obss_coex= %d, stbc_enable= %d, greenfield_enable= %d, user_control= %d, admin_control= %d,chan_util_threshold= %d, chan_util_selfheal_enable= %d, eco_power_down= %d dfs_timer:%d radar_Detected:%s \n",__func__, __LINE__,l_radio_cfg->enable,l_radio_cfg->band,l_radio_cfg->autoChannelEnabled,l_radio_cfg->channel,l_radio_cfg->channelWidth,l_radio_cfg->variant,l_radio_cfg->csa_beacon_count,l_radio_cfg->countryCode,l_radio_cfg->operatingEnvironment,l_radio_cfg->DCSEnabled,l_radio_cfg->numSecondaryChannels,new_rec->secondary_channels_list,l_radio_cfg->dtimPeriod,l_radio_cfg->beaconInterval,l_radio_cfg->operatingClass,l_radio_cfg->basicDataTransmitRates,l_radio_cfg->operationalDataTransmitRates,l_radio_cfg->fragmentationThreshold,l_radio_cfg->guardInterval,l_radio_cfg->transmitPower,l_radio_cfg->rtsThreshold,l_radio_cfg->factoryResetSsid,l_radio_cfg->radioStatsMeasuringInterval,l_radio_cfg->radioStatsMeasuringInterval,l_radio_cfg->ctsProtection,l_radio_cfg->obssCoex,l_radio_cfg->stbcEnable,l_radio_cfg->greenFieldEnable,l_radio_cfg->userControl,l_radio_cfg->adminControl,l_radio_cfg->chanUtilThreshold,l_radio_cfg->chanUtilSelfHealEnable, l_radio_cfg->EcoPowerDown, l_radio_cfg->DFSTimer, l_radio_cfg->radarDetected);
         wifi_util_dbg_print(WIFI_DB, "%s:%d Wifi_Radio_Config data Tscan=%lu Nscan=%lu, Tidle=%lu\n", __FUNCTION__, __LINE__, f_radio_cfg->OffChanTscanInMsec, f_radio_cfg->OffChanNscanInSec, f_radio_cfg->OffChanTidleInSec);
         pthread_mutex_unlock(&g_wifidb->data_cache_lock);
-	g_wifidb->radio_config[index].webconfig_apply_status_radio = webconfig_apply_status_success;
-	wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as success for radio %d\n", __func__, __LINE__, index);
+	g_wifidb->radio_config[index].config_status = webconfig_apply_status_success;
+	wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as success for radi
+o %d\n", __func__, __LINE__, index);
     }
     else
     {
@@ -813,7 +814,7 @@ void callback_Wifi_VAP_Config(ovsdb_update_monitor_t *mon,
         struct schema_Wifi_VAP_Config *new_rec)
 {
     int radio_index = 0;
-    int vap_index = 0;
+    int vap_index = 0, vap_array_index;
     wifi_mgr_t *g_wifidb = get_wifimgr_obj();
     wifi_ctrl_t *ctrl = get_wifictrl_obj();
     wifi_front_haul_bss_t *l_bss_param_cfg = NULL;
@@ -1040,8 +1041,12 @@ void callback_Wifi_VAP_Config(ovsdb_update_monitor_t *mon,
                 new_rec->hostap_mgt_frame_ctrl, new_rec->mbo_enabled);
             pthread_mutex_unlock(&g_wifidb->data_cache_lock);
         }
-	g_wifidb->radio_config[radio_index].vaps.rdk_vap_array[vap_index].webconfig_apply_status = webconfig_apply_status_success;
-	wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as success for vap %d\n", __func__, __LINE__, vap_index);
+	vap_array_index = convert_vap_index_to_vap_array_index(&g_wifidb->hal_cap.wif
+i_prop, vap_index);
+	g_wifidb->radio_config[radio_index].vaps.rdk_vap_array[vap_array_index].confi
+g_status = webconfig_apply_status_success;
+	wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Setting the status as success for vap
+%d in vap_array_index %d\n", __func__, __LINE__, vap_index, vap_array_index);
     }
     else
     {

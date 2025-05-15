@@ -603,9 +603,9 @@ typedef struct {
 } __attribute__((packed)) wifi_global_config_t;
 
 typedef enum {
-    webconfig_apply_status_inprogress,
     webconfig_apply_status_success,
-    webconfig_apply_status_failure
+    webconfig_apply_status_failure,
+    webconfig_apply_status_inprogress
 } webconfig_apply_status_t;
 
 typedef struct {
@@ -622,7 +622,7 @@ typedef struct {
     int                     anqp_request_count;
     int                     anqp_response_count;
     bool                    force_apply;
-    webconfig_apply_status_t                  webconfig_apply_status;
+    webconfig_apply_status_t                  config_status;
 } rdk_wifi_vap_info_t;
 
 typedef struct {
@@ -795,7 +795,7 @@ typedef struct {
     rdk_wifi_vap_map_t          vaps;
     wifi_radio_feature_param_t  feature;
     radarInfo_t                  radarInfo;
-    webconfig_apply_status_t     webconfig_apply_status_radio;
+    webconfig_apply_status_t     config_status;
 //  schema_wifi_radio_state_t   radio_state;
 } rdk_wifi_radio_t;
 

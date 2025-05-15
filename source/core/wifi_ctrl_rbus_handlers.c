@@ -3086,7 +3086,7 @@ bus_error_t set_force_vap_apply(char *name, raw_data_t *p_data, bus_user_data_t 
 bus_error_t get_ap_config_status(char *name, raw_data_t *p_data, bus_user_data_t *user_data)
 {
     int rc = bus_error_success;
-    unsigned int idx = 0, vap_idx = 0, radio_idx = 0;
+    unsigned int idx = 0, vap_idx = 0, radio_idx = 0, vap_array_index;
     wifi_mgr_t *mgr = (wifi_mgr_t *)get_wifimgr_obj();
 
     if (mgr == NULL) {
@@ -3105,12 +3105,13 @@ bus_error_t get_ap_config_status(char *name, raw_data_t *p_data, bus_user_data_t
         vap_idx = idx - 1;
         if (rc == 1 && vap_idx >= 0 && vap_idx <= MAX_VAP) {
             radio_idx = get_radio_index_for_vap_index(&mgr->hal_cap.wifi_prop, vap_idx);
+	    vap_array_index = convert_vap_index_to_vap_array_index(&mgr->hal_cap.wifi_prop, vap_idx);
             p_data->data_type = bus_data_type_uint32;
             p_data->raw_data.u32 = (unsigned int)mgr->radio_config[radio_idx]
-                                       .vaps.rdk_vap_array[vap_idx]
-                                       .webconfig_apply_status;
-            wifi_util_dbg_print(WIFI_CTRL, "%s:%d The AccessPoint apply status is %d\n", __func__,
-                __LINE__, p_data->raw_data.u32);
+                                       .vaps.rdk_vap_array[vap_array_index]
+                                       .config_status;
+            wifi_util_dbg_print(WIFI_CTRL, "%s:%d The AccessPoint apply status is %d for radio %d vap %d vap_array_index %d\n", __func__,
+                __LINE__, p_data->raw_data.u32, radio_idx, vap_idx, vap_array_index);
         }
     } else if (strstr(name, "Radio")) {
         rc = sscanf(name, "Device.WiFi.Radio.%d.ConfigStatus", &idx);
@@ -3118,7 +3119,7 @@ bus_error_t get_ap_config_status(char *name, raw_data_t *p_data, bus_user_data_t
         if (rc == 1 && radio_idx >= 0 && radio_idx <= MAX_NUM_RADIOS) {
             p_data->data_type = bus_data_type_uint32;
             p_data->raw_data.u32 =
-                (unsigned int)mgr->radio_config[radio_idx].webconfig_apply_status_radio;
+                (unsigned int)mgr->radio_config[radio_idx].config_status;
             wifi_util_dbg_print(WIFI_CTRL, "%s:%d The Radio apply status is %d\n", __func__,
                 __LINE__, p_data->raw_data.u32);
         }
