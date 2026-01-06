@@ -127,8 +127,7 @@ int vap_svc_private_update(vap_svc_t *svc, unsigned int radio_index, wifi_vap_in
             }
 #else
             wifi_util_error_print(WIFI_CTRL,"%s:%d Excluding the LnF VAP's for testing!!!\n", __func__, __LINE__);
-            //Replace with isLnf()
-            if (map->vap_array[i].vap_index != 10 && map->vap_array[i].vap_index != 11) {
+            if (!isVapLnfSecure(map->vap_array[i].vap_index)) {
                 wifi_util_error_print(WIFI_CTRL,"%s:%d VAP_EXISTS_FALSE for vap_index=%d, setting to TRUE \n",__FUNCTION__,__LINE__,map->vap_array[i].vap_index);
                 rdk_vap_info[i].exists = true;
             }
