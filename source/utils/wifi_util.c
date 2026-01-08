@@ -3919,8 +3919,12 @@ bool is_vap_param_config_changed(wifi_vap_info_t *vap_info_old, wifi_vap_info_t 
         return true;
     }
 
-    if (IS_CHANGED(rdk_old->exists, rdk_new->exists)) {
-        return true;
+    if ((rdk_new->exists == false) && (isVapLnfSecure(vap_info_new->vap_index))) {
+	    wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d no need to check if changed\n", __func__, __LINE__);
+    } else {
+        if (IS_CHANGED(rdk_old->exists, rdk_new->exists)) {
+            return true;
+        }
     }
 
     if (IS_CHANGED(vap_info_old->vap_index, vap_info_new->vap_index) ||
