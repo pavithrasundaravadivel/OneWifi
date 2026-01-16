@@ -126,11 +126,8 @@ int vap_svc_private_update(vap_svc_t *svc, unsigned int radio_index, wifi_vap_in
                 rdk_vap_info[i].exists = true;
             }
 #else
-            //wifi_util_error_print(WIFI_CTRL,"%s:%d Excluding the LnF VAP's for testing!!!\n", __func__, __LINE__);
-            //if (!isVapLnfSecure(map->vap_array[i].vap_index)) {
-                wifi_util_error_print(WIFI_CTRL,"%s:%d VAP_EXISTS_FALSE for vap_index=%d, setting to TRUE \n",__FUNCTION__,__LINE__,map->vap_array[i].vap_index);
-                rdk_vap_info[i].exists = true;
-            //}
+            wifi_util_error_print(WIFI_CTRL,"%s:%d VAP_EXISTS_FALSE for vap_index=%d, setting to TRUE \n",__FUNCTION__,__LINE__,map->vap_array[i].vap_index);
+            rdk_vap_info[i].exists = true;
 #endif /* _SR213_PRODUCT_REQ_ */
         }
 #endif /* !defined(_PP203X_PRODUCT_REQ_) && !defined(_GREXT02ACTS_PRODUCT_REQ_) */
