@@ -1166,7 +1166,7 @@ int mgmt_wifi_frame_recv(int ap_index, mac_address_t sta_mac, uint8_t *frame, ui
     wifi_actionFrameHdr_t *paction = NULL;
     frame_data_t mgmt_frame;
     wifi_event_subtype_t evt_subtype = wifi_event_hal_unknown_frame;
-    wifi_monitor_data_t data;
+    wifi_monitor_data_t *data = NULL;
 
     if (len == 0) {
         wifi_util_dbg_print(WIFI_CTRL,"%s:%d Recived zero length frame\n", __func__, __LINE__);
@@ -1216,22 +1216,31 @@ int mgmt_wifi_frame_recv(int ap_index, mac_address_t sta_mac, uint8_t *frame, ui
         memcpy(mgmt_frame.data, frame, len);
         mgmt_frame.frame.len = len;
         evt_subtype = wifi_event_hal_dpp_public_action_frame;
-        memset(&data, 0, sizeof(wifi_monitor_data_t));
 
-        data.ap_index = ap_index;
-        data.u.msg.frame.ap_index = ap_index;
-        memcpy(data.u.msg.frame.sta_mac, sta_mac, sizeof(mac_address_t));
-        data.u.msg.frame.type = type;
-        data.u.msg.frame.dir = dir;
+        data = (wifi_monitor_data_t *)malloc(sizeof(wifi_monitor_data_t));
+        if (data == NULL) {
+            wifi_util_error_print(WIFI_CTRL,"%s:%d: Failed to allocate memory\n", __func__, __LINE__);
+            return RETURN_ERR;
+        }
+        memset(data, 0, sizeof(wifi_monitor_data_t));
+
+        data->ap_index = ap_index;
+        data->u.msg.frame.ap_index = ap_index;
+        memcpy(data->u.msg.frame.sta_mac, sta_mac, sizeof(mac_address_t));
+        data->u.msg.frame.type = type;
+        data->u.msg.frame.dir = dir;
 #if defined (_XB7_PRODUCT_REQ_) || defined (_CBR_PRODUCT_REQ_)
     mgmt_frame.frame.sig_dbm = sig_dbm;
     mgmt_frame.frame.phy_rate = phy_rate;
 #endif
-        data.u.msg.frame.len = len;
-        data.u.msg.frame.recv_freq = recv_freq;
+        data->u.msg.frame.len = len;
+        data->u.msg.frame.recv_freq = recv_freq;
 
-        memcpy(&data.u.msg.data, frame, len);
-        push_event_to_monitor_queue(&data, wifi_event_monitor_action_frame, NULL);
+        memcpy(&data->u.msg.data, frame, len);
+        push_event_to_monitor_queue(data, wifi_event_monitor_action_frame, NULL);
+        free(data);
+        data = NULL;
+
         paction = (wifi_actionFrameHdr_t *)(frame + sizeof(struct ieee80211_frame));
         switch (paction->cat) {
             case wifi_action_frame_type_public:
@@ -2577,33 +2586,46 @@ wifi_vap_info_t* get_wifidb_vap_parameters(uint8_t vapIndex)
 int get_wifi_vap_network_status(uint8_t vapIndex, bool *status)
 {
     int ret;
-    wifi_vap_info_t vap_cfg;
+    int retval = RETURN_ERR;
+    wifi_vap_info_t *vap_cfg = NULL;
     rdk_wifi_vap_info_t rdk_vap_cfg;
     char vap_name[32];
     memset(vap_name, 0, sizeof(vap_name));
-    memset(&vap_cfg, 0, sizeof(vap_cfg));
+
+    vap_cfg = (wifi_vap_info_t *)malloc(sizeof(wifi_vap_info_t));
+    if (vap_cfg == NULL) {
+        wifi_util_error_print(WIFI_CTRL, "%s:%d: Failed to allocate memory\n", __func__, __LINE__);
+        return RETURN_ERR;
+    }
+    memset(vap_cfg, 0, sizeof(wifi_vap_info_t));
 
     ret = convert_vap_index_to_name(&((wifi_mgr_t *)get_wifimgr_obj())->hal_cap.wifi_prop, vapIndex, vap_name);
     if (ret != RETURN_OK) {
-        wifi_util_error_print(WIFI_CTRL, "%s:%d failure convert vap-index to name vapIndex:%d \n", __func__, __LINE__, vapIndex);
-        return RETURN_ERR;
+        wifi_util_error_print(WIFI_CTRL, "%s:%d: failure convert vap-index to name vapIndex:%d\n", __func__, __LINE__, vapIndex);
+        goto cleanup;
     }
-    ret = wifidb_get_wifi_vap_info(vap_name, &vap_cfg, &rdk_vap_cfg);
+    ret = wifidb_get_wifi_vap_info(vap_name, vap_cfg, &rdk_vap_cfg);
     if (ret != RETURN_OK) {
         wifi_util_dbg_print(WIFI_CTRL, "%s:%d wifiDb get vapInfo failure :vap_name:%s \n", __func__, __LINE__, vap_name);
         wifi_front_haul_bss_t *bss_param = Get_wifi_object_bss_parameter(vapIndex);
         if(bss_param != NULL) {
             *status = bss_param->enabled;
+            retval = RETURN_OK;
         } else {
             wifi_util_error_print(WIFI_CTRL, "%s:%d bss_param null for vapIndex:%d \n", __func__, __LINE__, vapIndex);
-            return RETURN_ERR;
         }
-        return RETURN_OK;
+        goto cleanup;
     }
-    *status = vap_cfg.u.bss_info.enabled;
+    *status = vap_cfg->u.bss_info.enabled;
     wifi_util_dbg_print(WIFI_CTRL, "%s:%d vap_info: vap_name:%s vap_index:%d, bss_status:%d\n", __func__, __LINE__, vap_name, vapIndex, *status);
+    retval = RETURN_OK;
 
-    return RETURN_OK;
+cleanup:
+    if (vap_cfg != NULL) {
+        free(vap_cfg);
+        vap_cfg = NULL;
+    }
+    return retval;
 }
 
 int get_wifi_mesh_sta_network_status(uint8_t vapIndex, bool *status)
