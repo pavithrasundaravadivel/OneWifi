@@ -184,7 +184,8 @@ int push_ocs_config_event_to_monitor_queue(wifi_mon_stats_request_state_t state,
     }
     //add nscan, tidlesec and convert into milli seconds and assign it to the time interval 
     data->u.mon_stats_config.args.radio_index = wifi_mgr->radio_config[radioIndex].vaps.radio_index;
-    data->u.mon_stats_config.interval_ms = (((int) ocs_cfg->NscanSec + ocs_cfg->TidleSec) * SEC_TO_MILLISEC);
+    //data->u.mon_stats_config.interval_ms = (((int) ocs_cfg->NscanSec + ocs_cfg->TidleSec) * SEC_TO_MILLISEC);
+    data->u.mon_stats_config.interval_ms = 5*60*1000; //5minutes
     data->u.mon_stats_config.args.channel_list.num_channels = valid_chan_count;
     data->u.mon_stats_config.args.scan_mode = WIFI_RADIO_SCAN_MODE_OFFCHAN;
     data->u.mon_stats_config.inst = wifi_app_inst_ocs;
