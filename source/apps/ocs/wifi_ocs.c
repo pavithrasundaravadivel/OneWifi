@@ -652,6 +652,7 @@ static int off_chan_scan_init (unsigned int radio_index)
     Nscan = ocs_cfg->NscanSec;
     Tidle = ocs_cfg->TidleSec;
 
+    wifi_util_error_print(WIFI_OCS, "Off_channel_scan feature RFC = %d; TScan = %lu; NScan = %lu; Tidle = %lu; DFS:%d\n", ocs_cfg->off_scan_rfc, Tscan, Nscan, Tidle, dfs);
     g_wifi_mgr->wifi_ccsp.desc.CcspTraceDebugRdkb_fn("Off_channel_scan feature RFC = %d; TScan = %lu; NScan = %lu; Tidle = %lu; DFS:%d\n", ocs_cfg->off_scan_rfc, Tscan, ((Nscan != 0)?((24*3600)/Nscan):Nscan), Tidle, dfs);
 
     if (!(is_radio_band_5G(g_wifi_mgr->radio_config[radio_index].oper.band))) {
