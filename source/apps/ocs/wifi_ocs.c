@@ -42,7 +42,7 @@
 #if defined (FEATURE_OFF_CHANNEL_SCAN_5G)
 
 #define OCS_NEIGBOUR_SCAN_PROVIDER_DELAY_SEC 5
-#define OFFCHAN_DEFAULT_NSCAN_IN_SEC 300
+#define OFFCHAN_DEFAULT_NSCAN_IN_SEC 10800
 #define SEC_TO_MILLISEC 1000
 static int off_chan_scan_init (unsigned int radio_index);
 void off_chan_print_neighbour_data (wifi_provider_response_t *provider_response);
@@ -133,7 +133,7 @@ int push_ocs_config_event_to_monitor_queue(wifi_mon_stats_request_state_t state,
     wifi_mgr_t *wifi_mgr = get_wifimgr_obj();
     off_channel_param_t *ocs_cfg = get_wifi_ocs(radioIndex);
     wifi_monitor_data_t *data;
-    wifi_util_dbg_print(WIFI_OCS, "%s:%d Entering \n", __func__, __LINE__);
+    wifi_util_dbg_print(WIFI_OCS, "%s:%d Entering state is %d\n", __func__, __LINE__, state);
 
     if (wifi_mgr == NULL) {
         wifi_util_error_print(WIFI_OCS,"%s:%d Mgr object is NULL \r\n", __func__, __LINE__);
@@ -194,7 +194,7 @@ int push_ocs_config_event_to_monitor_queue(wifi_mon_stats_request_state_t state,
     data->u.mon_stats_config.delay_provider_sec = OCS_NEIGBOUR_SCAN_PROVIDER_DELAY_SEC;
 
     config_ocs_chan_util(data, radioIndex);
-    wifi_util_dbg_print(WIFI_OCS,"%s:%d interval is %lu\n", __func__, __LINE__, data->u.mon_stats_config.interval_ms);
+    wifi_util_dbg_print(WIFI_OCS,"%s:%d interval is %lu state is %d\n", __func__, __LINE__, data->u.mon_stats_config.interval_ms, data->u.mon_stats_config.req_state);
     config_ocs_neighbour_scan(data, radioIndex);
 
     if (NULL != data) {
@@ -616,6 +616,7 @@ int ocs_init(wifi_app_t *app, unsigned int create_flag)
 int ocs_deinit(wifi_app_t *app)
 {
     for(unsigned int radio_index = 0; radio_index < MAX_NUM_RADIOS; radio_index++) {
+        wifi_util_dbg_print(WIFI_OCS, "Entering %s\n", __func__);
         push_ocs_config_event_to_monitor_queue(mon_stats_request_state_stop, radio_index);
     }
 
@@ -677,6 +678,7 @@ static int off_chan_scan_init (unsigned int radio_index)
             UINT ocs_scheduler_interval = (((int) ocs_cfg->curr_off_channel_scan_period) * SEC_TO_MILLISEC);
 
             scheduler_add_timer_task(ctrl->sched, FALSE, &ocs_cfg->ocs_scheduler_id, print_ocs_state, NULL, ocs_scheduler_interval, 0, 0);
+            wifi_util_dbg_print(WIFI_OCS, "Entering %s %d\n", __func__, __LINE__);
             push_ocs_config_event_to_monitor_queue(mon_stats_request_state_stop, radio_index);
         }
         return RETURN_OK;
@@ -703,12 +705,14 @@ static int off_chan_scan_init (unsigned int radio_index)
         if (ocs_cfg->ocs_scheduler_id == 0) {
             UINT ocs_scheduler_interval = (((int) ocs_cfg->curr_off_channel_scan_period) * SEC_TO_MILLISEC);
             scheduler_add_timer_task(ctrl->sched, FALSE, &ocs_cfg->ocs_scheduler_id, print_ocs_state, NULL, ocs_scheduler_interval, 0, 0);
+            wifi_util_dbg_print(WIFI_OCS, "Entering %s %d\n", __func__, __LINE__);
             push_ocs_config_event_to_monitor_queue(mon_stats_request_state_stop, radio_index);
         }
         return RETURN_OK;
     }
     g_wifi_mgr->wifi_ccsp.desc.CcspTraceInfoRdkb_fn("Off_channel_scan DFS:%d and country code is %s\n", dfs, countryStr);
 
+    wifi_util_dbg_print(WIFI_OCS, "Entering %s %d\n", __func__, __LINE__);
     if (push_ocs_config_event_to_monitor_queue(mon_stats_request_state_start, radio_index) != RETURN_OK) {
         g_wifi_mgr->wifi_ccsp.desc.CcspTraceErrorRdkb_fn("Off_channel_scan failed to push the event\n");
         wifi_util_error_print(WIFI_OCS, "Off_channel_scan failed to push the event\n");
