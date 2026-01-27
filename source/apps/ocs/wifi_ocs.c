@@ -42,7 +42,7 @@
 #if defined (FEATURE_OFF_CHANNEL_SCAN_5G)
 
 #define OCS_NEIGBOUR_SCAN_PROVIDER_DELAY_SEC 5
-#define OFFCHAN_DEFAULT_NSCAN_IN_SEC 10800
+#define OFFCHAN_DEFAULT_NSCAN_IN_SEC 300
 #define SEC_TO_MILLISEC 1000
 static int off_chan_scan_init (unsigned int radio_index);
 void off_chan_print_neighbour_data (wifi_provider_response_t *provider_response);
@@ -194,6 +194,7 @@ int push_ocs_config_event_to_monitor_queue(wifi_mon_stats_request_state_t state,
     data->u.mon_stats_config.delay_provider_sec = OCS_NEIGBOUR_SCAN_PROVIDER_DELAY_SEC;
 
     config_ocs_chan_util(data, radioIndex);
+    wifi_util_dbg_print(WIFI_OCS,"%s:%d interval is %lu\n", __func__, __LINE__, data->u.mon_stats_config.interval_ms);
     config_ocs_neighbour_scan(data, radioIndex);
 
     if (NULL != data) {
