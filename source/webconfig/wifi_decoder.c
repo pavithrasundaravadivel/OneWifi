@@ -6488,7 +6488,7 @@ webconfig_error_t decode_em_sta_link_metrics_object(const cJSON *em_sta_link, em
         return webconfig_error_decode;
     }
 
-    for (int i = 0; i < sta_link_metrics->sta_count; i++)
+    for (unsigned int i = 0; i < sta_link_metrics->sta_count; i++)
     {
         array_item = cJSON_GetArrayItem(em_sta_link, i);
 
@@ -6542,7 +6542,7 @@ webconfig_error_t decode_em_sta_link_metrics_object(const cJSON *em_sta_link, em
                 return webconfig_error_decode;
             }else {
                 decode_param_integer(error_code_obj, "Reason Code", param);
-                sta_link_metrics->per_sta_metrics[i].error_code.reason_code = param->valuestring;
+                sta_link_metrics->per_sta_metrics[i].error_code.reason_code = param->valuedouble;
 
                 decode_param_allow_optional_string(sta_link_metrics_obj, "STA MAC", param);
                 str_to_mac_bytes(param->valuestring, sta_link_metrics->per_sta_metrics[i].error_code.sta_mac);
@@ -6592,7 +6592,7 @@ webconfig_error_t decode_em_ap_metrics_report_object(const cJSON *em_ap_report_o
 {
     cJSON *vap_obj, *param_arr, *param_obj, *value_object, *assoc_sta_arr, *link_metrics_obj,
         *bssid_arr, *bssid_obj;
-    int j = 0, i = 0;
+    int j = 0;
     int sta_cnt = 0;
     assoc_sta_link_metrics_data_t *sta_link_metrics_data = NULL;
     assoc_sta_ext_link_metrics_data_t *sta_ext_link_metrics_data = NULL;

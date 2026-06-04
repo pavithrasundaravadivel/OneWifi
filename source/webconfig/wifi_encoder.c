@@ -3076,7 +3076,7 @@ webconfig_error_t encode_em_sta_link_metrics_object(const em_assoc_sta_link_metr
     char mac_str[32];
     cJSON *assoc_sta_link_metrics_obj, *error_code_obj, *assoc_sta_ext_link_metrics_obj, *param_obj, *temp_obj, *param_arr;
 
-    for (int i = 0; i < sta_link_metrics->sta_count; i++)
+    for (unsigned int i = 0; i < sta_link_metrics->sta_count; i++)
     {
         param_obj = cJSON_CreateObject();
         if (param_obj == NULL) {
@@ -3231,6 +3231,7 @@ webconfig_error_t encode_em_sta_traffic_stats_object(int sta_cnt,
         cJSON_AddNumberToObject(param_obj, "RxPacketsErrors", sta_traffic_stats[i].rx_packtes_errs);
         cJSON_AddNumberToObject(param_obj, "RetransmissionCount", sta_traffic_stats[i].retrans_cnt);
     }
+    return webconfig_error_none;
 }
 
 // merge with existing one, later
@@ -3381,8 +3382,8 @@ webconfig_error_t encode_sta_link_metrics_object(per_sta_metrics_t *sta_metrics,
 webconfig_error_t encode_em_ap_metrics_report_object(rdk_wifi_radio_t *radio,
     em_per_radio_report_t *radio_report, cJSON *emap_metrics_report_obj)
 {
-    cJSON *error_code_obj, *param_obj, *temp_obj, *param_arr;
-    int radio_index = radio_report->radio_index;
+    cJSON *param_obj, *temp_obj, *param_arr;
+    //int radio_index = radio_report->radio_index;
     wifi_vap_info_map_t *vap_map = NULL;
     wifi_vap_info_t *vap = NULL;
     em_vap_metrics_t *ap_metrics = NULL;
@@ -3430,7 +3431,7 @@ webconfig_error_t encode_em_ap_metrics_report_object(rdk_wifi_radio_t *radio,
     }
     cJSON_AddItemToObject(emap_metrics_report_obj, "Vap Info", param_arr);
 
-    for (int j = 0; j < radio->vaps.num_vaps; j++) {
+    for (unsigned int j = 0; j < radio->vaps.num_vaps; j++) {
         vap = &vap_map->vap_array[j];
         if (vap == NULL) {
             continue;
@@ -3443,7 +3444,7 @@ webconfig_error_t encode_em_ap_metrics_report_object(rdk_wifi_radio_t *radio,
         vap_arr_index = -1;
         for (int k = 0; k < MAX_NUM_VAP_PER_RADIO; k++) {
             ap_metrics = &radio_report->vap_reports[k];
-            if (strncmp(vap->u.bss_info.bssid, ap_metrics->vap_metrics.bssid,
+            if (strncmp((char*)vap->u.bss_info.bssid, (char*)ap_metrics->vap_metrics.bssid,
                 sizeof(bssid_t)) == 0) {
                     vap_arr_index = k;
                     break;

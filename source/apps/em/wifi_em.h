@@ -35,7 +35,7 @@ extern "C" {
 #define WIFI_EM_CLIENT_ASSOC_CTRL_REQ         "Device.WiFi.EM.ClientAssocCtrlRequest"
 
 #define WNM_CATEGORY               10
-#define IEEE80211_HDRLEN           24
+//#define IEEE80211_HDRLEN           24
 #define IEEE80211_EID_NEIGHBOR     52
 #define IEEE80211_NEIGHBOR_REPORT_MIN_LEN  13
 

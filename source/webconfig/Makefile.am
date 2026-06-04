@@ -80,6 +80,7 @@ endif
 
 if WITH_EASYMESH
 libwifi_webconfig_la_SOURCES += wifi_easymesh_translator.c
+CFLAGS += -DEASY_MESH_NODE  -DEM_APP
 endif
 
 libwifi_webconfig_la_SOURCES +=  $(top_srcdir)/lib/common/util.c $(top_srcdir)/source/utils/wifi_util.c $(top_srcdir)/source/utils/collection.c
