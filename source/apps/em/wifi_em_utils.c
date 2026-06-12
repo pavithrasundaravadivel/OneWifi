@@ -24,6 +24,7 @@
 
 #define NOISE_FLOOR (-95)
 
+#if 0
 char* survey_type_to_str(survey_type_t survey_type)
 {
     /* for (size_t i = 0; i < ARRAY_SIZE(scan_type_mapping); i++) {
@@ -34,16 +35,20 @@ char* survey_type_to_str(survey_type_t survey_type)
     wifi_util_error_print(WIFI_EM, "%s:%d failed to convert survey_type=%d\n",__func__, __LINE__, survey_type);
     return "unknown";
 }
+#endif
 
+#if 0
 char* radio_index_to_radio_type_str(unsigned int radio_index)
 {
-    radio_type_t radio_type;
+    radio_type_t radio_type = {0};
 
     //radio_type = radio_index_to_dpp_radio_type(radio_index);
 
     return radio_get_name_from_type(radio_type);
 }
+#endif
 
+#if 0
 char* neighbor_scan_mode_to_str(wifi_neighborScanMode_t scan_mode)
 {
     /* for (size_t i = 0; i < ARRAY_SIZE(scan_type_mapping); i++) {
@@ -54,7 +59,9 @@ char* neighbor_scan_mode_to_str(wifi_neighborScanMode_t scan_mode)
     wifi_util_error_print(WIFI_EM, "%s:%d failed to convert scan_mode=%d\n",__func__, __LINE__, scan_mode);
     return "unknown";
 }
+#endif 
 
+#if 0
 uint64_t get_real_ms()
 {
     struct timespec ts;
@@ -69,3 +76,4 @@ uint64_t timeval_to_ms(struct timeval *ts)
     }
     return (uint64_t)ts->tv_sec * MSEC_IN_SEC + ts->tv_usec / USEC_IN_MSEC;
 }
+#endif
