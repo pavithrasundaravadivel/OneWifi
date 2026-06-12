@@ -1361,7 +1361,7 @@ typedef struct {
 
 typedef struct {
     mac_addr_t sta_mac;
-    char client_type[32];
+    unsigned char client_type[32];
     assoc_sta_link_metrics_t assoc_sta_link_metrics;
     error_code_t error_code;
     assoc_sta_ext_link_metrics_t assoc_sta_ext_link_metrics;
@@ -1392,7 +1392,7 @@ typedef struct {
 
 typedef struct {
     mac_address_t mac_addr;
-    char client_type[32];
+   unsigned char client_type[32];
 } sta_client_info_t;
 
 typedef struct {
