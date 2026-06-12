@@ -502,7 +502,7 @@ int start_radios(rdk_dev_mode_type_t mode, unsigned int radio_index)
         //In case of reboot/FR, Non DFS channel will be selected and radio will switch to DFS Channel after 1 min.
         if( (wifi_radio_oper_param->band == WIFI_FREQUENCY_5_BAND ) || ( wifi_radio_oper_param->band == WIFI_FREQUENCY_5L_BAND ) || ( wifi_radio_oper_param->band == WIFI_FREQUENCY_5H_BAND)) {
             if (wifi_radio_oper_param->channel >= 52 && wifi_radio_oper_param->channel <= 144) {
-                if (mode == rdk_dev_mode_type_gw) {
+                if (mode == rdk_dev_mode_type_gw || mode == rdk_dev_mode_type_em_colocated_node) {
                     dfs_channel_data_t *dfs_channel_data = (dfs_channel_data_t *)malloc(
                         sizeof(dfs_channel_data_t));
                     memset(dfs_channel_data, 0, sizeof(dfs_channel_data_t));
