@@ -1459,7 +1459,7 @@ typedef struct {
 } assoc_sta_traffic_stats_t;
 
 typedef struct {
-    mac_address_t bssid;
+    bssid_t bssid;
     int channel_util;
     int num_of_assoc_stas;
     bool inc_esp_ac_be;
