@@ -1392,7 +1392,7 @@ typedef struct {
 
 typedef struct {
     mac_address_t mac_addr;
-   unsigned char client_type[32];
+    unsigned char client_type[32];
 } sta_client_info_t;
 
 typedef struct {
