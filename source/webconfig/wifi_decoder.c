@@ -6492,7 +6492,7 @@ webconfig_error_t decode_em_sta_link_metrics_object(const cJSON *em_sta_link, em
         str_to_mac_bytes(param->valuestring, sta_link_metrics->per_sta_metrics[i].sta_mac);
 
         decode_param_allow_empty_string(array_item, "Client Type", param);
-        strncpy(sta_link_metrics->per_sta_metrics[i].client_type, param->valuestring, strlen(param->valuestring));
+        memcpy(sta_link_metrics->per_sta_metrics[i].client_type, param->valuestring, strlen(param->valuestring));
         sta_link_metrics->per_sta_metrics[i].client_type[strlen(param->valuestring)] = '\0';
 
         // Associated STA Link Metrics
@@ -6762,7 +6762,7 @@ webconfig_error_t decode_em_ap_metrics_report_object(const cJSON *em_ap_report_o
                     radio_report->vap_reports[j].sta_link_metrics[sta_cnt].sta_mac);
 
                 decode_param_allow_optional_string(link_metrics_obj, "Client Type", value_object);
-                strncpy(radio_report->vap_reports[j].sta_link_metrics[sta_cnt].client_type,
+                memcpy(radio_report->vap_reports[j].sta_link_metrics[sta_cnt].client_type,
                     value_object->valuestring, strlen(value_object->valuestring));
                 radio_report->vap_reports[j].sta_link_metrics[sta_cnt].client_type[strlen(value_object->valuestring)] = '\0';
 

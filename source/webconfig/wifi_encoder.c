@@ -3084,7 +3084,7 @@ webconfig_error_t encode_em_sta_link_metrics_object(const em_assoc_sta_link_metr
 
         uint8_mac_to_string_mac(sta_link_metrics->per_sta_metrics[i].sta_mac, mac_str);
         cJSON_AddStringToObject(param_obj, "STA MAC", mac_str);
-        cJSON_AddStringToObject(param_obj, "Client Type", sta_link_metrics->per_sta_metrics[i].client_type);
+        cJSON_AddStringToObject(param_obj, "Client Type", (const char *)sta_link_metrics->per_sta_metrics[i].client_type);
 
         // Associated STA Link Metrics
         if (sta_link_metrics->per_sta_metrics[i].assoc_sta_link_metrics.num_bssid != 0)
@@ -3252,7 +3252,7 @@ webconfig_error_t encode_sta_link_metrics_object(per_sta_metrics_t *sta_metrics,
 
         uint8_mac_to_string_mac(sta_metrics[i].sta_mac, mac_str);
         cJSON_AddStringToObject(param_obj, "STA MAC", mac_str);
-        cJSON_AddStringToObject(param_obj, "Client Type", sta_metrics[i].client_type);
+        cJSON_AddStringToObject(param_obj, "Client Type", (const char *)sta_metrics[i].client_type);
 
         // Associated STA Link Metrics
         if (sta_metrics[i].assoc_sta_link_metrics.num_bssid != 0) {
