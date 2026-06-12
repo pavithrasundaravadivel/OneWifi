@@ -1219,8 +1219,9 @@ bus_error_t webconfig_get_dml_subdoc(char *event_name, raw_data_t *p_data, bus_u
         return bus_error_general;
     }
 
-    wifi_util_error_print(WIFI_CTRL, "PAVI dml encode success\n");
+    wifi_util_error_print(WIFI_CTRL, "PAVI dml encode success %p\n", data->u.encoded.raw);
     uint32_t str_size = strlen(data->u.encoded.raw) + 1;
+    wifi_util_error_print(WIFI_CTRL, "PAVI str_size is %d\n", str_size);
     p_data->data_type = bus_data_type_string;
     p_data->raw_data.bytes = malloc(str_size);
     if (p_data->raw_data.bytes == NULL) {
@@ -1231,12 +1232,15 @@ bus_error_t webconfig_get_dml_subdoc(char *event_name, raw_data_t *p_data, bus_u
         data = NULL;
         return bus_error_out_of_resources;
     }
+    wifi_util_error_print(WIFI_CTRL, "PAVI str copying the bytes %p\n", data->u.encoded.raw);
     strncpy(p_data->raw_data.bytes, data->u.encoded.raw, str_size);
     p_data->raw_data_len = str_size;
 
+    wifi_util_error_print(WIFI_CTRL, "PAVI freeing the data\n");
     webconfig_data_free(data);
     free(data);
     data = NULL;
+    wifi_util_error_print(WIFI_CTRL, "PAVI return success\n");
     return bus_error_success;
 }
 
