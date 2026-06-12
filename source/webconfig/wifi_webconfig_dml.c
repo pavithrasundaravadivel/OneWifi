@@ -111,6 +111,7 @@ webconfig_error_t encode_dml_subdoc(webconfig_t *config, webconfig_subdoc_data_t
     json = cJSON_CreateObject();
     data->u.encoded.json = json;
 
+    wifi_util_error_print(WIFI_WEBCONFIG, "PAVI Entering %s\n", __func__);
     cJSON_AddStringToObject(json, "Version", "1.0");
     cJSON_AddStringToObject(json, "SubDocName", "dml");
 
@@ -143,14 +144,18 @@ webconfig_error_t encode_dml_subdoc(webconfig_t *config, webconfig_subdoc_data_t
     //encode hal cap
     hal_cap = cJSON_CreateObject();
  #if defined EASY_MESH_NODE
+#if 0
     obj = cJSON_CreateObject();
     cJSON_AddItemToObject(json, "DeviceInfo", obj);
     // Add Device Info params here
-    if (encode_device_info(&params->hal_cap.wifi_prop, obj) != webconfig_error_none) {
+    wifi_prop = &params->hal_cap.wifi_prop;
+    wifi_util_error_print(WIFI_WEBCONFIG, "PAVI passing the ref\n");
+    if (encode_device_info(wifi_prop, obj) != webconfig_error_none) {
         wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: Failed to encode device object\n", __func__, __LINE__);
         cJSON_Delete(json);
         return webconfig_error_encode;
     }
+#endif
 #endif
     cJSON_AddItemToObject(json, "WiFiCap", hal_cap);
 
@@ -313,6 +318,7 @@ webconfig_error_t encode_dml_subdoc(webconfig_t *config, webconfig_subdoc_data_t
     json_param_obscure(str, "RadiusSecret");
     json_param_obscure(str, "SecondaryRadiusSecret");
     json_param_obscure(str, "DasSecret");
+    wifi_util_dbg_print(WIFI_WEBCONFIG, "PAVI the encoded raw pointer is commented out %p\n", data->u.encoded.raw);
     wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Encoded JSON:\n%s\n", __func__, __LINE__, str);
 
     cJSON_free(str);

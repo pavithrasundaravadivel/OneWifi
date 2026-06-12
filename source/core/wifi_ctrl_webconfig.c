@@ -2517,8 +2517,8 @@ webconfig_error_t webconfig_ctrl_apply(webconfig_subdoc_t *doc, webconfig_subdoc
     wifi_ctrl_webconfig_state_t conf_state_pending;
     wifi_ctrl_webconfig_state_t radio_state_pending;
 
-    wifi_util_info_print(WIFI_WEBCONFIG, "%s:%d: webconfig_state:%02x doc_type:%d doc_name:%s\n", 
-            __func__, __LINE__, ctrl->webconfig_state, doc->type, doc->name);
+    wifi_util_info_print(WIFI_WEBCONFIG, "%s:%d: webconfig_state:%02x doc_type:%d doc_name:%s raw_data is %p\n", 
+            __func__, __LINE__, ctrl->webconfig_state, doc->type, doc->name, data->u.encoded.raw);
 
     switch (doc->type) {
         case webconfig_subdoc_type_unknown:
@@ -2950,13 +2950,14 @@ webconfig_error_t webconfig_ctrl_apply(webconfig_subdoc_t *doc, webconfig_subdoc
             break;
 
         case webconfig_subdoc_type_dml:
-            wifi_util_dbg_print(WIFI_MGR, "%s:%d: sending subdoc:%s\n", __func__, __LINE__, doc->name);
+            wifi_util_dbg_print(WIFI_MGR, "%s:%d: sending subdoc:%s raw_data is %p\n", __func__, __LINE__, doc->name, data->u.encoded.raw);
 #ifdef WEBCONFIG_TESTS_OVER_QUEUE
             push_data_to_consumer_queue((unsigned char *)data->u.encoded.raw, strlen(data->u.encoded.raw), consumer_event_type_webconfig, consumer_event_webconfig_set_data);
 #else
             if (data->descriptor & webconfig_data_descriptor_encoded) {
                 if (ctrl->webconfig_state & WEBCONFIG_DML_SUBDOC_STATES) {
                     ctrl->webconfig_state &= ~WEBCONFIG_DML_SUBDOC_STATES;
+		    wifi_util_dbg_print(WIFI_WEBCONFIG, "PAVI data before bus apply is %p\n", data->u.encoded.raw);
                     ret = webconfig_bus_apply(ctrl, &data->u.encoded);
                 } else if (ctrl->webconfig_state & ctrl_webconfig_state_trigger_dml_thread_data_update_pending) {
                     ctrl->webconfig_state &= ~ctrl_webconfig_state_trigger_dml_thread_data_update_pending;
@@ -3002,6 +3003,7 @@ webconfig_error_t webconfig_ctrl_apply(webconfig_subdoc_t *doc, webconfig_subdoc
         case webconfig_subdoc_type_radio_24G:
         case webconfig_subdoc_type_radio_5G:
         case webconfig_subdoc_type_radio_6G:
+	    wifi_util_dbg_print(WIFI_MGR, "%s:%d: sending subdoc:%s\n", __func__, __LINE__, doc->name);
             if (doc->type == webconfig_subdoc_type_radio_24G) {
                 radio_state_pending = ctrl_webconfig_state_radio_24G_rsp_pending;
             } else if (doc->type == webconfig_subdoc_type_radio_5G) {

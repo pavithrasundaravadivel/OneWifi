@@ -837,6 +837,13 @@ int webconfig_bus_apply(wifi_ctrl_t *ctrl, webconfig_subdoc_encoded_data_t *data
     bus_error_t rc;
     raw_data_t rdata;
 
+    wifi_util_dbg_print(WIFI_CTRL, "PAVI pointer inside bus_apply is %p", data->raw);
+
+    if (data->raw == NULL) {
+        wifi_util_dbg_print(WIFI_CTRL, "PAVI raw data is NULL in %s\n", __func__);
+	return RETURN_ERR;
+    }
+
     memset(&rdata, 0, sizeof(raw_data_t));
     rdata.data_type = bus_data_type_string;
     rdata.raw_data.bytes = (void *)data->raw;
@@ -1212,6 +1219,7 @@ bus_error_t webconfig_get_dml_subdoc(char *event_name, raw_data_t *p_data, bus_u
         return bus_error_general;
     }
 
+    wifi_util_error_print(WIFI_CTRL, "PAVI dml encode success\n");
     uint32_t str_size = strlen(data->u.encoded.raw) + 1;
     p_data->data_type = bus_data_type_string;
     p_data->raw_data.bytes = malloc(str_size);
