@@ -183,53 +183,161 @@ bool validate_subdoc_data(webconfig_t *config, webconfig_subdoc_data_t *data)
     return true;
 }
 
-webconfig_error_t webconfig_set(webconfig_t *config, webconfig_subdoc_data_t *data)
+webconfig_error_t webconfig_set(webconfig_t *config,
+                               webconfig_subdoc_data_t *data)
 {
     webconfig_subdoc_t  *doc;
     webconfig_error_t err = RETURN_OK;
 
+    wifi_util_error_print(WIFI_WEBCONFIG,
+        "PAVI ENTER webconfig_set config=%p data=%p\n",
+        config, data);
+
     if (validate_subdoc_data(config, data) == false) {
-        wifi_util_error_print(WIFI_WEBCONFIG,"%s:%d: Invalid data .. not parsable\n", __func__, __LINE__);
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "%s:%d: Invalid data .. not parsable\n",
+            __func__, __LINE__);
         return webconfig_error_invalid_subdoc;
     }
 
     doc = &config->subdocs[data->type];
+
+    wifi_util_error_print(WIFI_WEBCONFIG,
+        "PAVI doc=%p type=%d name=%s\n",
+        doc, doc->type, doc->name);
+
     if (doc->access_check_subdoc(config, data) != webconfig_error_none) {
-        wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: invalid access for subdocument type:%d in entity:%d\n",
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "%s:%d: invalid access for subdocument type:%d in entity:%d\n",
             __func__, __LINE__, doc->type, config->initializer);
         return webconfig_error_not_permitted;
     }
 
-    wifi_util_error_print(WIFI_WEBCONFIG, "PAVI inside webconfig set\n");
-    if ((data->descriptor & webconfig_data_descriptor_decoded) == webconfig_data_descriptor_decoded) {
-	    wifi_util_error_print(WIFI_WEBCONFIG, "PAVI inside webconfig_data_descriptor_decoded\n");
-        if ((err = doc->translate_to_subdoc(config, data)) != webconfig_error_none) {
-            wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: Subdocument translation failed\n", __func__, __LINE__);
-        } else if ((wifi_util_error_print(WIFI_WEBCONFIG, "PAVI calling encode_subdoc\n"), err = doc->encode_subdoc(config, data)) != webconfig_error_none) {
-            wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: Subdocument encode failed\n", __func__, __LINE__);
-        } else if ((wifi_util_error_print(WIFI_WEBCONFIG, "PAVI calling apply subdoc %p %p\n", data, data->u.encoded.raw), data->descriptor = webconfig_data_descriptor_encoded)
-                    && (config->apply_data(doc, data)) != webconfig_error_none) {
-            wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d Subdocument apply failed\n", __func__, __LINE__);
+    /* STRUCT LAYOUT DEBUG (critical for your issue) */
+    wifi_util_error_print(WIFI_WEBCONFIG,
+        "PAVI BEFORE: data=%p sizeof(*data)=%zu desc=%d raw=%p raw_off=%zu\n",
+        data,
+        sizeof(*data),
+        data->descriptor,
+        data->u.encoded.raw,
+        offsetof(webconfig_subdoc_data_t, u.encoded.raw));
+
+    if ((data->descriptor & webconfig_data_descriptor_decoded)
+            == webconfig_data_descriptor_decoded) {
+
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "PAVI path=DECODED descriptor=%d\n", data->descriptor);
+
+        /* Step 1: translate */
+        err = doc->translate_to_subdoc(config, data);
+        if (err != webconfig_error_none) {
+            wifi_util_error_print(WIFI_WEBCONFIG,
+                "%s:%d: Subdocument translation failed\n",
+                __func__, __LINE__);
+            goto exit;
+        }
+
+        /* Step 2: encode */
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "PAVI before encode raw=%p\n",
+            data->u.encoded.raw);
+
+        err = doc->encode_subdoc(config, data);
+        if (err != webconfig_error_none) {
+            wifi_util_error_print(WIFI_WEBCONFIG,
+                "%s:%d: Subdocument encode failed\n",
+                __func__, __LINE__);
+            goto exit;
+        }
+
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "PAVI AFTER encode raw=%p\n",
+            data->u.encoded.raw);
+
+        /* Step 3: APPLY (important debug point) */
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "PAVI BEFORE APPLY data=%p raw=%p desc=%d\n",
+            data,
+            data->u.encoded.raw,
+            data->descriptor);
+
+        data->descriptor = webconfig_data_descriptor_encoded;
+
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "PAVI APPLY CALL data=%p raw=%p desc=%d fn=%p\n",
+            data,
+            data->u.encoded.raw,
+            data->descriptor,
+            config->apply_data);
+
+        /* ***** KEY CALL ***** */
+        err = config->apply_data(doc, data);
+
+        if (err != webconfig_error_none) {
+            wifi_util_error_print(WIFI_WEBCONFIG,
+                "%s:%d: Subdocument apply failed\n",
+                __func__, __LINE__);
             err = webconfig_error_apply;
-		}
-    } else if ((data->descriptor & webconfig_data_descriptor_encoded) == webconfig_data_descriptor_encoded) {
-	wifi_util_error_print(WIFI_WEBCONFIG, "PAVI inside webconfig_data_descriptor_encoded\n");
-        if ((err = doc->decode_subdoc(config, data)) != webconfig_error_none) {
-            wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: Subdocument decode failed\n", __func__, __LINE__);
-        } else if ((err = doc->translate_from_subdoc(config, data)) != webconfig_error_none) {
-            wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: Subdocument translation failed\n", __func__, __LINE__);
-        } else if ((data->descriptor = webconfig_data_descriptor_decoded)
-                    && (config->apply_data(doc, data)) != webconfig_error_none) {
-            wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d Subdocument apply failed\n", __func__, __LINE__);
+            goto exit;
+        }
+
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "PAVI AFTER APPLY data=%p raw=%p desc=%d\n",
+            data,
+            data->u.encoded.raw,
+            data->descriptor);
+
+    }
+    else if ((data->descriptor & webconfig_data_descriptor_encoded)
+                == webconfig_data_descriptor_encoded) {
+
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "PAVI path=ENCODED descriptor=%d\n", data->descriptor);
+
+        err = doc->decode_subdoc(config, data);
+        if (err != webconfig_error_none) {
+            wifi_util_error_print(WIFI_WEBCONFIG,
+                "%s:%d: Subdocument decode failed\n",
+                __func__, __LINE__);
+            goto exit;
+        }
+
+        err = doc->translate_from_subdoc(config, data);
+        if (err != webconfig_error_none) {
+            wifi_util_error_print(WIFI_WEBCONFIG,
+                "%s:%d: Subdocument translation failed\n",
+                __func__, __LINE__);
+            goto exit;
+        }
+
+        data->descriptor = webconfig_data_descriptor_decoded;
+
+        wifi_util_error_print(WIFI_WEBCONFIG,
+            "PAVI APPLY (encoded path) data=%p raw=%p desc=%d\n",
+            data, data->u.encoded.raw, data->descriptor);
+
+        err = config->apply_data(doc, data);
+        if (err != webconfig_error_none) {
+            wifi_util_error_print(WIFI_WEBCONFIG,
+                "%s:%d: Subdocument apply failed\n",
+                __func__, __LINE__);
             err = webconfig_error_apply;
+            goto exit;
         }
     }
 
+exit:
+
+    wifi_util_error_print(WIFI_WEBCONFIG,
+        "PAVI EXIT data=%p final raw=%p desc=%d err=%d\n",
+        data,
+        data->u.encoded.raw,
+        data->descriptor,
+        err);
 
     data->descriptor = 0;
 
     return err;
-
 }
 
 static webconfig_error_t translate_to_proto(webconfig_subdoc_type_t type, webconfig_subdoc_data_t *data)

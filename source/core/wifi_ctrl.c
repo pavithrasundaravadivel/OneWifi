@@ -1454,8 +1454,10 @@ int init_wifi_ctrl(wifi_ctrl_t *ctrl)
         svc_init(&ctrl->ctrl_svc[i], (vap_svc_type_t)i);
     }
 
+    wifi_util_error_print(WIFI_CTRL, "PAVI Calling bus_register_handlers\n");
     //Register to BUS for webconfig interactions
     bus_register_handlers(ctrl);
+    wifi_util_error_print(WIFI_CTRL, "PAVI After Calling bus_register_handlers\n");
 
     // subscribe for BUS events
     bus_subscribe_events(ctrl);

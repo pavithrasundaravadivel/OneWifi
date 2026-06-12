@@ -4461,6 +4461,7 @@ void bus_register_handlers(wifi_ctrl_t *ctrl)
                                     { bus_data_type_string, false, 0, 0, 0, NULL } },
     };
 
+    wifi_util_error_print(WIFI_CTRL, "PAVI inside %s\n", __func__);
     rc = get_bus_descriptor()->bus_open_fn(&ctrl->handle, component_name);
     if (rc != bus_error_success) {
         wifi_util_error_print(WIFI_CTRL, "%s:%d bus: bus_open_fn open failed for component:%s, rc:%d\n",
@@ -4468,12 +4469,14 @@ void bus_register_handlers(wifi_ctrl_t *ctrl)
         return;
     }
 
+    wifi_util_error_print(WIFI_CTRL, "PAVI after bus open\n");
     num_elements = (sizeof(dataElements) / sizeof(bus_data_element_t));
     rc = get_bus_descriptor()->bus_reg_data_element_fn(&ctrl->handle, dataElements, num_elements);
     if (rc != bus_error_success) {
         wifi_util_error_print(WIFI_CTRL, "%s bus: bus_regDataElements failed\n", __FUNCTION__);
     }
 
+    wifi_util_error_print(WIFI_CTRL, "PAVI Registered the elements\n");
     wifi_util_info_print(WIFI_CTRL, "%s bus: bus event register:[%s]:%s\r\n", __FUNCTION__,
         WIFI_STA_2G_VAP_CONNECT_STATUS, WIFI_STA_5G_VAP_CONNECT_STATUS);
     return;

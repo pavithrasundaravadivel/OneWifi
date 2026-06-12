@@ -2517,6 +2517,8 @@ webconfig_error_t webconfig_ctrl_apply(webconfig_subdoc_t *doc, webconfig_subdoc
     wifi_ctrl_webconfig_state_t conf_state_pending;
     wifi_ctrl_webconfig_state_t radio_state_pending;
 
+    wifi_util_info_print(WIFI_WEBCONFIG, "PAVI %s data=%p sizeof(*data)=%zu desc=%d raw=%p raw_off=%zu\n", __func__, data, sizeof(*data), data->descriptor, data->u.encoded.raw, offsetof(webconfig_subdoc_data_t, u.encoded.raw));
+
     wifi_util_info_print(WIFI_WEBCONFIG, "%s:%d: webconfig_state:%02x doc_type:%d doc_name:%s raw_data is %p\n", 
             __func__, __LINE__, ctrl->webconfig_state, doc->type, doc->name, data->u.encoded.raw);
 
