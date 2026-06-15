@@ -340,6 +340,7 @@ exit:
     return err;
 }
 
+#if 0
 static webconfig_error_t translate_to_proto(webconfig_subdoc_type_t type, webconfig_subdoc_data_t *data)
 {
 #if defined EASY_MESH_NODE
@@ -361,7 +362,7 @@ static webconfig_error_t translate_from_proto(webconfig_subdoc_type_t type, webc
     return webconfig_error_none;
 #endif
 }
-
+#endif
 webconfig_error_t webconfig_init(webconfig_t *config)
 {
 
@@ -907,8 +908,8 @@ webconfig_error_t webconfig_init(webconfig_t *config)
     config->subdocs[webconfig_subdoc_type_link_report].translate_from_subdoc = translate_from_link_report_subdoc;
     
 
-    config->proto_desc.translate_to = translate_to_proto;
-    config->proto_desc.translate_from = translate_from_proto;
+//    config->proto_desc.translate_to = translate_to_proto;
+//    config->proto_desc.translate_from = translate_from_proto;
 
     return webconfig_error_none;
 }

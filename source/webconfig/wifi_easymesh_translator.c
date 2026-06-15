@@ -207,11 +207,11 @@ void default_em_device_info(em_device_info_t  *device_info, em_ieee_1905_securit
 // This routine converts DML webconfig subdoc values to em_device_info_t,em_network_info_t easymesh structures
 webconfig_error_t   translate_device_object_to_easymesh_for_dml(webconfig_subdoc_data_t *data)
 {
-    em_device_info_t  *device_info;
-    em_network_info_t *network_info;
-    em_ieee_1905_security_info_t *security_info;
+    em_device_info_t  *device_info = NULL;
+    em_network_info_t *network_info = NULL;
+    em_ieee_1905_security_info_t *security_info = NULL;
 
-    webconfig_external_easymesh_t *proto;
+    webconfig_external_easymesh_t *proto= NULL;
     rdk_wifi_radio_t *radio;
     bool dfs_enable = false;
     wifi_platform_property_t *wifi_prop = &data->u.decoded.hal_cap.wifi_prop;
@@ -220,6 +220,11 @@ webconfig_error_t   translate_device_object_to_easymesh_for_dml(webconfig_subdoc
     proto = (webconfig_external_easymesh_t *)data->u.decoded.external_protos;
     if (proto == NULL) {
         wifi_util_error_print(WIFI_WEBCONFIG,"%s:%d: external_protos is NULL\n", __func__, __LINE__);
+        return webconfig_error_translate_to_easymesh;
+    }
+
+    if (proto->get_device_info == NULL || proto->get_network_info == NULL || proto->get_ieee_1905_security_info == NULL) {
+        wifi_util_error_print(WIFI_WEBCONFIG,"%s:%d: proto is NULL %p %p %p\n", __func__, __LINE__, proto->get_device_info, proto->get_network_info, proto->get_ieee_1905_security_info);
         return webconfig_error_translate_to_easymesh;
     }
 
