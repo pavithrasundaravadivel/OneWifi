@@ -27,6 +27,7 @@
 #include "wifi_monitor.h"
 #include "wifi_util.h"
 #include "wifi_ctrl.h"
+#include "webconfig_external_proto.h"
 
 #if 0
 static webconfig_error_map_t    g_webconfig_erors[] =
@@ -342,25 +343,59 @@ exit:
 
 static webconfig_error_t translate_to_proto(webconfig_subdoc_type_t type, webconfig_subdoc_data_t *data)
 {
-/*#if defined EASY_MESH_NODE
+    webconfig_external_easymesh_t *proto = NULL;
+    proto = (webconfig_external_easymesh_t *)data->u.decoded.external_protos;
+
+    if (proto == NULL) {
+        wifi_util_error_print(WIFI_WEBCONFIG,"%s:%d: external_protos is NULL\n", __func__, __LINE__);
+	return webconfig_error_translate_to_easymesh;
+    }
+
+    if (proto->get_device_info != NULL) {
+        wifi_util_error_print(WIFI_WEBCONFIG,"%s:%d: Inside easymesh tables\n", __func__, __LINE__);
+	return(translate_to_easymesh_tables(type, data));
+    } else {
+        wifi_util_error_print(WIFI_WEBCONFIG,"%s:%d: Inside ovsdb tables\n", __func__, __LINE__);
+        return(translate_to_ovsdb_tables(type, data));
+    }
+    return webconfig_error_none;
+#if 0
+#if defined EASY_MESH_NODE
     return(translate_to_easymesh_tables(type, data));
-#el*/
-#ifdef ONEWIFI_OVSDB_TABLE_SUPPORT
+#elif ONEWIFI_OVSDB_TABLE_SUPPORT
     return(translate_to_ovsdb_tables(type, data));
 #else
     return webconfig_error_none;
+#endif
 #endif
 }
 
 static webconfig_error_t translate_from_proto(webconfig_subdoc_type_t type, webconfig_subdoc_data_t *data)
 {
-/*#if defined EASY_MESH_NODE
+    webconfig_external_easymesh_t *proto = NULL;
+    proto = (webconfig_external_easymesh_t *)data->u.decoded.external_protos;
+
+    if (proto == NULL) {
+        wifi_util_error_print(WIFI_WEBCONFIG,"%s:%d: external_protos is NULL\n", __func__, __LINE__);
+        return webconfig_error_translate_to_easymesh;
+    }
+
+    if (proto->get_device_info != NULL) {
+        wifi_util_error_print(WIFI_WEBCONFIG,"%s:%d: Inside easymesh tables\n", __func__, __LINE__);
+        return(translate_from_easymesh_tables(type, data));
+    } else {
+        wifi_util_error_print(WIFI_WEBCONFIG,"%s:%d: Inside ovsdb tables\n", __func__, __LINE__);
+        return(translate_from_ovsdb_tables(type, data));
+    }
+    return webconfig_error_none;
+#if 0
+#if defined EASY_MESH_NODE
     return(translate_from_easymesh_tables(type, data));
-#el*/
-#ifdef ONEWIFI_OVSDB_TABLE_SUPPORT
+#elif ONEWIFI_OVSDB_TABLE_SUPPORT
     return(translate_from_ovsdb_tables(type, data));
 #else
     return webconfig_error_none;
+#endif
 #endif
 }
 
