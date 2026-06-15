@@ -3849,6 +3849,9 @@ void webconfig_proto_easymesh_init(webconfig_external_easymesh_t *proto, void *d
         ext_proto_update_bsta_mld_info_t update_bsta_mld, ext_proto_update_assoc_sta_mld_info_t update_assoc_sta_mld,
         ext_proto_get_ap_mld_frm_bssid_t get_ap_mld_frm_bssid, ext_proto_get_radio_cap_t get_radio_cap)
 {
+
+    wifi_util_dbg_print(WIFI_WEBCONFIG, "EASYMESH INIT CALLED proto=%p dev=%p net=%p\n", proto, get_dev, get_net);
+
     proto->data_model = data_model;
     proto->m2ctrl_radioconfig = m2ctrl_radioconfig;
 	proto->policy_config = policy_config;
