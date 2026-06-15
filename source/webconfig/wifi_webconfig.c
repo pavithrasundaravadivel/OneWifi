@@ -422,8 +422,8 @@ webconfig_error_t webconfig_init(webconfig_t *config)
     config->subdocs[webconfig_subdoc_type_dml].access_check_subdoc = access_check_dml_subdoc;
     config->subdocs[webconfig_subdoc_type_dml].encode_subdoc = encode_dml_subdoc;
     config->subdocs[webconfig_subdoc_type_dml].decode_subdoc = decode_dml_subdoc;
-    config->subdocs[webconfig_subdoc_type_dml].translate_to_subdoc = translate_to_dml_subdoc;
-    config->subdocs[webconfig_subdoc_type_dml].translate_from_subdoc = translate_from_dml_subdoc;
+//    config->subdocs[webconfig_subdoc_type_dml].translate_to_subdoc = translate_to_dml_subdoc;
+//    config->subdocs[webconfig_subdoc_type_dml].translate_from_subdoc = translate_from_dml_subdoc;
 
     config->subdocs[webconfig_subdoc_type_radio].type = webconfig_subdoc_type_radio;
     strcpy(config->subdocs[webconfig_subdoc_type_radio].name, "radio");

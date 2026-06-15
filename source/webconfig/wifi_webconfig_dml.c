@@ -52,7 +52,7 @@ webconfig_error_t access_check_dml_subdoc(webconfig_t *config, webconfig_subdoc_
 
 webconfig_error_t translate_from_dml_subdoc(webconfig_t *config, webconfig_subdoc_data_t *data)
 {
-    if (((data->descriptor & webconfig_data_descriptor_translate_to_ovsdb) == webconfig_data_descriptor_translate_to_ovsdb)
+/*    if (((data->descriptor & webconfig_data_descriptor_translate_to_ovsdb) == webconfig_data_descriptor_translate_to_ovsdb)
         ||  ((data->descriptor & webconfig_data_descriptor_translate_to_easymesh) == webconfig_data_descriptor_translate_to_easymesh)) {
         if (config->proto_desc.translate_to(webconfig_subdoc_type_dml, data) != webconfig_error_none) {
             if ((data->descriptor & webconfig_data_descriptor_translate_to_ovsdb) == webconfig_data_descriptor_translate_to_ovsdb) {
@@ -66,13 +66,13 @@ webconfig_error_t translate_from_dml_subdoc(webconfig_t *config, webconfig_subdo
     } else {
         // no translation required
     }
-
+*/
     return webconfig_error_none;
 }
 
 webconfig_error_t translate_to_dml_subdoc(webconfig_t *config, webconfig_subdoc_data_t *data)
 {
-    if (((data->descriptor & webconfig_data_descriptor_translate_from_ovsdb) == webconfig_data_descriptor_translate_from_ovsdb)
+/*    if (((data->descriptor & webconfig_data_descriptor_translate_from_ovsdb) == webconfig_data_descriptor_translate_from_ovsdb)
         ||  ((data->descriptor & webconfig_data_descriptor_translate_from_easymesh) == webconfig_data_descriptor_translate_from_easymesh)) {
         if (config->proto_desc.translate_from(webconfig_subdoc_type_dml, data) != webconfig_error_none) {
             if ((data->descriptor & webconfig_data_descriptor_translate_from_ovsdb) == webconfig_data_descriptor_translate_from_ovsdb) {
@@ -85,7 +85,7 @@ webconfig_error_t translate_to_dml_subdoc(webconfig_t *config, webconfig_subdoc_
     } else {
         // no translation required
     }
-
+*/
     return webconfig_error_none;
 }
 
