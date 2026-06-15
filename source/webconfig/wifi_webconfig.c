@@ -342,9 +342,10 @@ exit:
 
 static webconfig_error_t translate_to_proto(webconfig_subdoc_type_t type, webconfig_subdoc_data_t *data)
 {
-#if defined EASY_MESH_NODE
+/*#if defined EASY_MESH_NODE
     return(translate_to_easymesh_tables(type, data));
-#elif ONEWIFI_OVSDB_TABLE_SUPPORT
+#el*/
+#ifdef ONEWIFI_OVSDB_TABLE_SUPPORT
     return(translate_to_ovsdb_tables(type, data));
 #else
     return webconfig_error_none;
@@ -353,9 +354,10 @@ static webconfig_error_t translate_to_proto(webconfig_subdoc_type_t type, webcon
 
 static webconfig_error_t translate_from_proto(webconfig_subdoc_type_t type, webconfig_subdoc_data_t *data)
 {
-#if defined EASY_MESH_NODE
+/*#if defined EASY_MESH_NODE
     return(translate_from_easymesh_tables(type, data));
-#elif ONEWIFI_OVSDB_TABLE_SUPPORT
+#el*/
+#ifdef ONEWIFI_OVSDB_TABLE_SUPPORT
     return(translate_from_ovsdb_tables(type, data));
 #else
     return webconfig_error_none;
