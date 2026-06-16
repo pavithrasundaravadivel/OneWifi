@@ -226,12 +226,12 @@ typedef struct {
     assoclist_notifier_type_t assoclist_notifier_type;
     void *external_protos;
     collect_subscribed_stats_t collect_stats;
-#ifdef EM_APP
+//#ifdef EM_APP
     em_config_t em_config;
     sta_beacon_report_reponse_t sta_beacon_report;
     em_assoc_sta_link_metrics_rsp_t em_sta_link_metrics_rsp;
     em_ap_metrics_report_t em_ap_metrics_report;
-#endif
+//#endif
     report_batch_t *qmgr_report;
 } webconfig_subdoc_decoded_data_t;
 
