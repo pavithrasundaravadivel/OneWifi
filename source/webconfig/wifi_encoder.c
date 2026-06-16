@@ -757,9 +757,10 @@ webconfig_error_t encode_wifi_global_config(const wifi_global_param_t *global_in
     //VlanCfgVersion
     cJSON_AddNumberToObject(global_obj, "VlanCfgVersion", global_info->vlan_cfg_version);
 
+#ifndef EASY_MESH_NODE
     //WpsPin
     cJSON_AddSafeStringToObject(global_obj, "WpsPin", global_info->wps_pin, sizeof(global_info->wps_pin));
-    
+#endif    
     // BandsteeringEnable
     cJSON_AddBoolToObject(global_obj, "BandsteeringEnable", (const cJSON_bool)global_info->bandsteering_enable);
 
@@ -805,6 +806,7 @@ webconfig_error_t encode_wifi_global_config(const wifi_global_param_t *global_in
     //FixedWmmParams
     cJSON_AddNumberToObject(global_obj, "FixedWmmParams", global_info->fixed_wmm_params);
 
+#ifndef EASY_MESH_NODE
     //WifiRegionCode
     cJSON_AddSafeStringToObject(global_obj, "WifiRegionCode", global_info->wifi_region_code, sizeof(global_info->wifi_region_code));
 
@@ -828,7 +830,7 @@ webconfig_error_t encode_wifi_global_config(const wifi_global_param_t *global_in
 
     //TxRxRateList
     cJSON_AddStringToObject(global_obj, "TxRxRateList", global_info->txrx_rate_list);
-
+#endif
     // MgtFrameRateLimitEnable
     cJSON_AddBoolToObject(global_obj, "MgtFrameRateLimitEnable",
         global_info->mgt_frame_rate_limit_enable);
