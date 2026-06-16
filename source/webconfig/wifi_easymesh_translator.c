@@ -3624,6 +3624,7 @@ webconfig_error_t  translate_to_easymesh_tables(webconfig_subdoc_type_t type, we
             break;
 
         case webconfig_subdoc_type_dml:
+	    wifi_util_error_print(WIFI_WEBCONFIG, "Inside dml %s:%d\n", __func__, __LINE__);
             if (translate_device_object_to_easymesh_for_dml(data) != webconfig_error_none) {
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: webconfig_subdoc_type_dml radio state translation to easymesh failed\n", __func__, __LINE__);
                 return webconfig_error_translate_to_easymesh;
@@ -3637,6 +3638,7 @@ webconfig_error_t  translate_to_easymesh_tables(webconfig_subdoc_type_t type, we
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: webconfig_subdoc_type_dml vap_object translation to easymesh failed\n", __func__, __LINE__);
                 return webconfig_error_translate_to_easymesh;
             }
+	    wifi_util_error_print(WIFI_WEBCONFIG, "Breaking from dml %s:%d\n", __func__, __LINE__);
             break;
 
         case webconfig_subdoc_type_assocdev_stats:
@@ -3732,6 +3734,7 @@ webconfig_error_t  translate_to_easymesh_tables(webconfig_subdoc_type_t type, we
         default:
             break;
     }
+    wifi_util_error_print(WIFI_WEBCONFIG, "Returning from %s:%d\n", __func__, __LINE__);
     return webconfig_error_none;
 }
 
@@ -3782,6 +3785,7 @@ webconfig_error_t   translate_from_easymesh_tables(webconfig_subdoc_type_t type,
             break;
 
         case webconfig_subdoc_type_dml:
+	    wifi_util_error_print(WIFI_WEBCONFIG, "inside DML from %s:%d\n", __func__, __LINE__);
             if (translate_device_object_from_easymesh_to_dml(data) != webconfig_error_none) {
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: webconfig_subdoc_type_dml translation from easymesh failed\n", __func__, __LINE__);
                 return webconfig_error_translate_from_easymesh;
@@ -3795,6 +3799,7 @@ webconfig_error_t   translate_from_easymesh_tables(webconfig_subdoc_type_t type,
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: webconfig_subdoc_type_dml translation from easymesh failed\n", __func__, __LINE__);
                 return webconfig_error_translate_from_easymesh;
             }
+	    wifi_util_error_print(WIFI_WEBCONFIG, "breaking from %s:%d\n", __func__, __LINE__);
             break;
 
         case webconfig_subdoc_type_radio:
@@ -3833,6 +3838,7 @@ webconfig_error_t   translate_from_easymesh_tables(webconfig_subdoc_type_t type,
         default:
             break;
     }
+    wifi_util_error_print(WIFI_WEBCONFIG, "Returning from %s:%d\n", __func__, __LINE__);
     return webconfig_error_none;
 }
 

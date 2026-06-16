@@ -7757,6 +7757,7 @@ webconfig_error_t   translate_to_ovsdb_tables(webconfig_subdoc_type_t type, webc
         break;
 
         case webconfig_subdoc_type_dml:
+	    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Inside dml\n", __func__, __LINE__);
             // translate rif, vif tables for all rows
             if (translate_radio_object_to_ovsdb_radio_config_for_dml(data) != webconfig_error_none) {
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: webconfig_subdoc_type_dml radio_object translation to ovsdb failed\n", __func__, __LINE__);
@@ -7783,6 +7784,7 @@ webconfig_error_t   translate_to_ovsdb_tables(webconfig_subdoc_type_t type, webc
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: webconfig_subdoc_type_dml mac entries free failed\n", __func__, __LINE__);
                 return webconfig_error_translate_to_ovsdb;
             }
+	    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: breaking from dml\n", __func__, __LINE__);
 
         break;
 
@@ -7840,6 +7842,7 @@ webconfig_error_t   translate_to_ovsdb_tables(webconfig_subdoc_type_t type, webc
         break;
 
     }
+    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Returning here\n", __func__, __LINE__);
     return webconfig_error_none;
 }
 
@@ -7916,6 +7919,7 @@ webconfig_error_t   translate_from_ovsdb_tables(webconfig_subdoc_type_t type, we
         break;
 
         case webconfig_subdoc_type_dml:
+	wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Inside dml here\n", __func__, __LINE__);
             // translate rif, vif tables for all rows
             if (translate_radio_object_from_ovsdb_radio_config_for_dml(data) != webconfig_error_none) {
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: webconfig_subdoc_type_dml radio_object translation from ovsdb failed\n", __func__, __LINE__);
@@ -7926,6 +7930,7 @@ webconfig_error_t   translate_from_ovsdb_tables(webconfig_subdoc_type_t type, we
                 wifi_util_error_print(WIFI_WEBCONFIG, "%s:%d: webconfig_subdoc_type_dml vap_object translation from ovsdb failed\n", __func__, __LINE__);
                 return webconfig_error_translate_from_ovsdb;
             }
+	    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Breaking from here\n", __func__, __LINE__);
         break;
 
         case webconfig_subdoc_type_mac_filter:
@@ -7981,5 +7986,6 @@ webconfig_error_t   translate_from_ovsdb_tables(webconfig_subdoc_type_t type, we
         break;
 
     }
+    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Returning here\n", __func__, __LINE__);
     return webconfig_error_none;
 }
