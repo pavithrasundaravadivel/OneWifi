@@ -334,7 +334,7 @@ typedef struct {
     wifi_csi_data_t csi;
 } __attribute__((packed)) wifi_csi_dev_t;
 
-#ifdef EM_APP
+//#ifdef EM_APP
 typedef struct wifi_hal_rrm_request {
     uint8_t dialog_token;
     uint8_t duration;
@@ -349,7 +349,7 @@ typedef struct {
     size_t len;
     wifi_BeaconReport_t *data;
 } beacon_repo_data_t;
-#endif
+//#endif
 
 // data collection api type
 typedef enum {
@@ -1277,7 +1277,7 @@ typedef struct {
     unsigned int            radio_Temperature;
 } radio_data_t;
 
-#ifdef EM_APP
+//#ifdef EM_APP
 
 #define EM_MAX_OPERATING_CLASS 48
 #define EM_MAX_CHANNEL_BW_LEN 16
@@ -1530,7 +1530,7 @@ typedef struct {
     bool reason_code_present;
 } em_connection_status_event_t;
 
-#endif // EM_APP
+//#endif // EM_APP
 
 #ifdef __cplusplus
 }
