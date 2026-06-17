@@ -143,7 +143,6 @@ webconfig_error_t encode_dml_subdoc(webconfig_t *config, webconfig_subdoc_data_t
 
     //encode hal cap
     hal_cap = cJSON_CreateObject();
-#if 0
 #if defined EASY_MESH_NODE
     obj = cJSON_CreateObject();
     cJSON_AddItemToObject(json, "DeviceInfo", obj);
@@ -155,7 +154,6 @@ webconfig_error_t encode_dml_subdoc(webconfig_t *config, webconfig_subdoc_data_t
         cJSON_Delete(json);
         return webconfig_error_encode;
     }
-#endif
 #endif
     cJSON_AddItemToObject(json, "WiFiCap", hal_cap);
 
@@ -382,7 +380,6 @@ webconfig_error_t decode_dml_subdoc(webconfig_t *config, webconfig_subdoc_data_t
         wifi_util_error_print(WIFI_WEBCONFIG, "%s\n", (char *)data->u.encoded.raw);
         return webconfig_error_invalid_subdoc;
     }
-#if 0
 #if defined EASY_MESH_NODE
     // decode DeviceInfo object
     obj_config = cJSON_GetObjectItem(json, "DeviceInfo");
@@ -391,7 +388,6 @@ webconfig_error_t decode_dml_subdoc(webconfig_t *config, webconfig_subdoc_data_t
         cJSON_Delete(json);
         return webconfig_error_encode;
     }
-#endif
 #endif
     //decode Wifi Cap
     hal_cap = cJSON_GetObjectItem(json, "WiFiCap");

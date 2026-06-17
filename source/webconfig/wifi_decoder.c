@@ -3384,7 +3384,6 @@ webconfig_error_t decode_config_object(const cJSON *wifi, wifi_global_config_t *
     return webconfig_error_none;
 }
 
-#if 0
 webconfig_error_t decode_device_info(const cJSON *device_cfg, wifi_platform_property_t *info)
 {
     const cJSON  *param;
@@ -3409,7 +3408,7 @@ webconfig_error_t decode_device_info(const cJSON *device_cfg, wifi_platform_prop
 
     return webconfig_error_none;
 }
-#endif
+
 unsigned char *stringtohex(unsigned int in_len, char *in, unsigned int out_len, unsigned char *out)
 {
     unsigned int i;

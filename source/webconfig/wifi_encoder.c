@@ -2305,7 +2305,6 @@ webconfig_error_t encode_csi_object(queue_t *csi_queue, cJSON *csi_obj)
     return webconfig_error_none;
 }
 
-#if 0
 webconfig_error_t encode_device_info(wifi_platform_property_t *wifi_prop, cJSON *device_obj)
 {
     mac_addr_str_t mac_str;
@@ -2332,7 +2331,7 @@ webconfig_error_t encode_device_info(wifi_platform_property_t *wifi_prop, cJSON 
 
     return webconfig_error_none; 
 }
-#endif
+
 webconfig_error_t encode_wifiradiocap(wifi_platform_property_t *wifi_prop, cJSON *radio_obj, int numRadios)
 {
     unsigned int freq_band_count = 0;
