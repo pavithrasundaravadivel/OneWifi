@@ -6377,7 +6377,7 @@ webconfig_error_t decode_em_policy_object(const cJSON *em_cfg, em_config_t *em_c
     const cJSON *policy_obj, *local_steering_policy, *btm_steering_policy, *backhaul_policy,
         *channel_scan_policy, *radio_metrics_array;
     const cJSON *unsuccess_assoc_policy, *qos_mgt_policy, *def_8021q_policy;
-    const cJSON *traffic_sep_policy, *client_filters_policy, *radio_steer_array, *radio_steer_obj;
+    const cJSON *radio_steer_array, *radio_steer_obj;
 
     policy_obj = cJSON_GetObjectItem(em_cfg, "Policy");
     if (policy_obj == NULL) {
