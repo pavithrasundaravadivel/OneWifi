@@ -294,7 +294,7 @@ static void active_msmt_log_message( blaster_log_level_t level,char *fmt, ...)
     wifi_util_dbg_print(WIFI_BLASTER, msg);
 }
 
-static char *active_msmt_status_to_str(active_msmt_status_t status)
+char *active_msmt_status_to_str(active_msmt_status_t status)
 {
     switch (status)
     {
@@ -790,7 +790,7 @@ void SetActiveMsmtStepDstMac(char *DstMac, ULONG StepIns)
 
     wifi_util_dbg_print(WIFI_BLASTER, "%s:%d: client %s not found \n", __func__, __LINE__, DstMac);
 
-    if (ctrl->network_mode == rdk_dev_mode_type_ext) {
+    if (ctrl->network_mode == rdk_dev_mode_type_ext || ctrl->network_mode == rdk_dev_mode_type_em_node) {
         char msg[256] = {};
 
         snprintf(msg, sizeof(msg), "Failed to find MAC in STA associated list");
@@ -1444,7 +1444,7 @@ void WiFiBlastClient(void)
              */
             if (is_blaster_device_associated(apIndex, bmac, NULL) == false) {
 
-                if (g_wifi_ctrl->network_mode == rdk_dev_mode_type_ext) {
+                if (g_wifi_ctrl->network_mode == rdk_dev_mode_type_ext || g_wifi_ctrl->network_mode == rdk_dev_mode_type_em_node) {
 
                     snprintf(msg, sizeof(msg), "The MAC is disconnected in traffic gen");
                     active_msmt_report_error(__func__, cfg->PlanId, &cfg->Step[StepCount], msg, ACTIVE_MSMT_STATUS_NO_CLIENT);
@@ -1485,7 +1485,7 @@ void WiFiBlastClient(void)
                 continue;
             }
             if (primary_radio_channel != radioOperation->channel) {
-                if (g_wifi_ctrl->network_mode == rdk_dev_mode_type_ext) {
+                if (g_wifi_ctrl->network_mode == rdk_dev_mode_type_ext || g_wifi_ctrl->network_mode == rdk_dev_mode_type_em_node) {
 
                     snprintf(msg, sizeof(msg), "Failed to fill in radio stats");
                     active_msmt_report_error(__func__, cfg->PlanId, &cfg->Step[StepCount], msg, ACTIVE_MSMT_STATUS_FAILED);
@@ -1546,7 +1546,7 @@ void WiFiBlastClient(void)
         wifi_app->data.u.blaster.frameCountSample = NULL;
     }
 
-    if (g_wifi_ctrl->network_mode == rdk_dev_mode_type_ext) {
+    if (g_wifi_ctrl->network_mode == rdk_dev_mode_type_ext || g_wifi_ctrl->network_mode == rdk_dev_mode_type_em_node) {
         g_wifi_mgr->ctrl.webconfig_state |= ctrl_webconfig_state_blaster_cfg_complete_rsp_pending;
         wifi_util_dbg_print(WIFI_BLASTER, "%s : %d  Extender Mode Activated. Updated the blaster state as complete\n", __func__, __LINE__);
     }
@@ -1599,7 +1599,7 @@ static void process_request(active_msmt_t *cfg)
     SetActiveMsmtStatus(__func__, ACTIVE_MSMT_STATUS_SUCCEED);
     ResetActiveMsmtStepInstances();
 
-    if (ctrl->network_mode == rdk_dev_mode_type_ext) {
+    if (ctrl->network_mode == rdk_dev_mode_type_ext || ctrl->network_mode == rdk_dev_mode_type_em_node) {
 
         if (ActiveMsmtConfValidation(cfg) != RETURN_OK) {
             wifi_util_error_print(WIFI_BLASTER, "%s:%d Active measurement conf is invalid!\n", __func__, __LINE__);
@@ -1657,7 +1657,7 @@ static void process_request(active_msmt_t *cfg)
 
     if (report == true) {
 
-        if (ctrl->network_mode == rdk_dev_mode_type_ext) {
+        if (ctrl->network_mode == rdk_dev_mode_type_ext || ctrl->network_mode == rdk_dev_mode_type_em_node) {
             active_msmt_report_all_steps(cfg, msg, status);
             mgr->ctrl.webconfig_state |= ctrl_webconfig_state_blaster_cfg_complete_rsp_pending;
         }
@@ -1808,7 +1808,7 @@ static void pkt_gen_blast_client(char *dst_mac, wifi_interface_name_t *ifname)
         ONEWIFI_PKTGEN_STATUS_SUCCEED) {
         char *msg = "Failed to run Traffic generator";
 
-        if (ctrl->network_mode == rdk_dev_mode_type_ext) {
+        if (ctrl->network_mode == rdk_dev_mode_type_ext || ctrl->network_mode == rdk_dev_mode_type_em_node) {
             SetActiveMsmtStatus(__func__, ACTIVE_MSMT_STATUS_FAILED);
             active_msmt_set_status_desc(__func__, g_active_msmt->active_msmt.PlanId, step->StepId,
                 step->DestMac, msg);
@@ -1988,7 +1988,7 @@ if ( *SampleCount <= (GetActiveMsmtNumberOfSamples())) {
                     (wifi_app->data.u.blaster.frameCountSample)[*SampleCount].WaitAndLatencyInMs, dev_conn->cli_RSSI, dev_conn->cli_LastDataDownlinkRate, dev_conn->cli_LastDataUplinkRate, dev_conn->cli_SNR,g_active_msmt->active_msmt_data[*SampleCount].Operating_channelwidth ,g_active_msmt->active_msmt_data[*SampleCount].Operating_standard,g_active_msmt->active_msmt_data[*SampleCount].MaxTxRate, g_active_msmt->active_msmt_data[*SampleCount].MaxRxRate);
             } else {
 
-                if (ctrl->network_mode == rdk_dev_mode_type_ext) {
+                if (ctrl->network_mode == rdk_dev_mode_type_ext || ctrl->network_mode == rdk_dev_mode_type_em_node) {
                     active_msmt_status_t status;
 
                     if (is_blaster_device_associated(index, bmac, NULL) == false) {
