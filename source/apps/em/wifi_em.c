@@ -2913,7 +2913,7 @@ bus_error_t start_channel_scan(char *name, raw_data_t *p_data)
 
     return bus_error_success;
 }
-#if 0
+
 static int del_acl_cb(void *arg)
 {
     if (!arg) {
@@ -2941,7 +2941,7 @@ static int del_acl_cb(void *arg)
     return (int)rc;
 }
 
-static bus_error_t controller_set_client_acl_rules(char *event_name, raw_data_t *p_data, void *userData)
+static bus_error_t controller_set_client_acl_rules(char *event_name, raw_data_t *p_data, bus_user_data_t *userData)
 {
     wifi_util_dbg_print(WIFI_CTRL, "%s:%d Received Client Assoc Ctrl Event from Agent\n", __func__, __LINE__);
 
@@ -3110,7 +3110,6 @@ cleanup:
     }
     return ret;
 }
-#endif
 
 bus_error_t set_disconn_steady_state(char *name, raw_data_t *p_data, bus_user_data_t *user_data)
 {
@@ -3188,7 +3187,7 @@ int em_init(wifi_app_t *app, unsigned int create_flag)
             { bus_data_type_bytes, false, 0, 0, 0, NULL } },
         { WIFI_EM_AP_METRICS_REPORT, bus_element_type_method,
             { NULL, NULL, NULL, NULL, NULL, NULL }, slow_speed, ZERO_TABLE,
-            { bus_data_type_string, false, 0, 0, 0, NULL } }
+            { bus_data_type_string, false, 0, 0, 0, NULL } },
         { WIFI_EM_CLIENT_ASSOC_CTRL_REQ, bus_element_type_method,
             { NULL, controller_set_client_acl_rules, NULL, NULL, NULL, NULL }, slow_speed, ZERO_TABLE,
             { bus_data_type_bytes, true, 0, 0, 0, NULL } },
