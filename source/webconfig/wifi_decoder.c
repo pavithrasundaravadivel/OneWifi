@@ -6612,7 +6612,7 @@ webconfig_error_t decode_em_policy_object(const cJSON *em_cfg, em_config_t *em_c
                     int mscs_count = cJSON_GetArraySize(mscs_arr);
                     em_config->qos_mgt_policy[qi].num_mscs = (mscs_count < EM_MAX_QOS_MAC) ? mscs_count : EM_MAX_QOS_MAC;
                     for (int i = 0; i < em_config->qos_mgt_policy[qi].num_mscs; i++) {
-                        const cJSON *mac_item = cJSON_GetArrayItem(mscs_arr, i);
+                        cJSON *mac_item = cJSON_GetArrayItem(mscs_arr, i);
                         str_to_mac_bytes(cJSON_GetStringValue(mac_item),
                             em_config->qos_mgt_policy[qi].mscs_mac[i]);
                     }
@@ -6622,7 +6622,7 @@ webconfig_error_t decode_em_policy_object(const cJSON *em_cfg, em_config_t *em_c
                     int scs_count = cJSON_GetArraySize(scs_arr);
                     em_config->qos_mgt_policy[qi].num_scs = (scs_count < EM_MAX_QOS_MAC) ? scs_count : EM_MAX_QOS_MAC;
                     for (int i = 0; i < em_config->qos_mgt_policy[qi].num_scs; i++) {
-                        const cJSON *mac_item = cJSON_GetArrayItem(scs_arr, i);
+                        cJSON *mac_item = cJSON_GetArrayItem(scs_arr, i);
                         str_to_mac_bytes(cJSON_GetStringValue(mac_item),
                             em_config->qos_mgt_policy[qi].scs_mac[i]);
                     }
@@ -6636,7 +6636,7 @@ webconfig_error_t decode_em_policy_object(const cJSON *em_cfg, em_config_t *em_c
                 int mscs_count = cJSON_GetArraySize(mscs_arr);
                 em_config->qos_mgt_policy[0].num_mscs = (mscs_count < EM_MAX_QOS_MAC) ? mscs_count : EM_MAX_QOS_MAC;
                 for (int i = 0; i < em_config->qos_mgt_policy[0].num_mscs; i++) {
-                    const cJSON *mac_item = cJSON_GetArrayItem(mscs_arr, i);
+                    cJSON *mac_item = cJSON_GetArrayItem(mscs_arr, i);
                     str_to_mac_bytes(cJSON_GetStringValue(mac_item),
                         em_config->qos_mgt_policy[0].mscs_mac[i]);
                 }
@@ -6646,7 +6646,7 @@ webconfig_error_t decode_em_policy_object(const cJSON *em_cfg, em_config_t *em_c
                 int scs_count = cJSON_GetArraySize(scs_arr);
                 em_config->qos_mgt_policy[0].num_scs = (scs_count < EM_MAX_QOS_MAC) ? scs_count : EM_MAX_QOS_MAC;
                 for (int i = 0; i < em_config->qos_mgt_policy[0].num_scs; i++) {
-                    const cJSON *mac_item = cJSON_GetArrayItem(scs_arr, i);
+                    cJSON *mac_item = cJSON_GetArrayItem(scs_arr, i);
                     str_to_mac_bytes(cJSON_GetStringValue(mac_item),
                         em_config->qos_mgt_policy[0].scs_mac[i]);
                 }
