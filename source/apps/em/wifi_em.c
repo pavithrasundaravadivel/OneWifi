@@ -131,12 +131,7 @@ static int em_get_radio_index_from_mac(mac_addr_t ruuid)
 
     for (unsigned int i = 0; i < num_of_radios; i++) {
         vap_map = (wifi_vap_info_map_t *)get_wifidb_vap_map(i);
-<<<<<<< HEAD
-        for (unsigned int j = 0; j < vap_map->num_vaps; j++) {
-=======
-
-        for (int j = 0; vap_map && j < vap_map->num_vaps; j++) {
->>>>>>> develop
+        for (unsigned int j = 0; vap_map && j < vap_map->num_vaps; j++) {
             to_mac_str(vap_map->vap_array[j].u.bss_info.bssid, bss_str);
             //wifi_util_dbg_print(WIFI_EM, "%s:%d comparing ruuid[%s] with bss mac: %s\n", __func__, __LINE__, rad_str, bss_str);
             if (memcmp(ruuid, vap_map->vap_array[j].u.bss_info.bssid, sizeof(mac_addr_t)) == 0) {
@@ -1460,11 +1455,7 @@ int handle_sta_client_info(wifi_app_t *app, void *data)
         }
         memset(cli_data, 0, sizeof(sta_client_info_t));
         memcpy(cli_data->mac_addr, sta_info->mac_addr, sizeof(mac_address_t));
-<<<<<<< HEAD
         memcpy(cli_data->client_type, sta_info->client_type, sizeof(cli_data->client_type));
-=======
-        strncpy((char *)cli_data->client_type, (const char *)sta_info->client_type, sizeof(cli_data->client_type) - 1);
->>>>>>> develop
         cli_data->client_type[sizeof(cli_data->client_type) - 1] = '\0';
 
         hash_map_put(client_type_info.sta_client_type.client_type_map, strdup(client_mac),
@@ -1494,8 +1485,8 @@ static int em_publish_failed_connection(const wifi_em_failed_conn_t *fc)
     int n;
     bus_error_t rc;
 
-    to_mac_str(fc->bssid,   bssid_str);
-    to_mac_str(fc->sta_mac, sta_str);
+    to_mac_str((unsigned char *)fc->bssid,   bssid_str);
+    to_mac_str((unsigned char *)fc->sta_mac, sta_str);
 
     n = snprintf(json_buf, sizeof(json_buf),
         "{\"bssid\":\"%s\",\"sta_mac\":\"%s\",\"status\":%u,\"reason\":%u}",
@@ -1799,8 +1790,8 @@ static int ap_report_push_cb(em_ap_report_callback_arg_t *args)
     wifi_vap_info_t *vap_info = NULL;
     wifi_mgr_t *wifi_mgr = get_wifimgr_obj();
     raw_data_t rdata;
-    unsigned int j = 0, k = 0, cnt = 0;
-    int cache_vap_index = -1;
+    unsigned int j = 0, k = 0;
+    int cache_vap_index = -1, cnt = 0;
     mac_addr_str_t radio_str;
     em_config_t *em_config = &args->app->data.u.em_data.em_config;
     int req_radio_count = em_config->radio_metrics_policies.radio_count;
@@ -2048,11 +2039,7 @@ cleanup:
     // Cleanup allocated memory
     if (data != NULL) {
         for (int j = 0; j < req_radio_count; j++) {
-<<<<<<< HEAD
-            for (unsigned int i = 0; i < radio->vaps.num_vaps; i++) {
-=======
-            for (int i = 0; i < radio->vaps.num_vaps && i < MAX_NUM_VAP_PER_RADIO; i++) {
->>>>>>> develop
+            for (unsigned int i = 0; i < radio->vaps.num_vaps && i < MAX_NUM_VAP_PER_RADIO; i++) {
                 vap_report = &data->u.decoded.em_ap_metrics_report.radio_reports[j].vap_reports[i];
                 if (vap_report->sta_link_metrics != NULL) {
                     free(vap_report->sta_link_metrics);
@@ -2323,15 +2310,11 @@ static void ap_report_cache_init()
 
     for (unsigned int i = 0; i < num_of_radios; i++) {
         vap_map = (wifi_vap_info_map_t *)get_wifidb_vap_map(i);
-<<<<<<< HEAD
-        for (unsigned int j = 0; j < vap_map->num_vaps; j++) {
-=======
         if (!vap_map) {
             continue;
         }
 
-        for (int j = 0; j < vap_map->num_vaps; j++) {
->>>>>>> develop
+        for (unsigned int j = 0; j < vap_map->num_vaps; j++) {
             vap_info = &vap_map->vap_array[j];
             if (vap_info == NULL) {
                 wifi_util_dbg_print(WIFI_EM, "%s:%d NULL VAP\r\n", __func__, __LINE__);
