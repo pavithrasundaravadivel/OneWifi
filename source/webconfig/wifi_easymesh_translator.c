@@ -247,7 +247,7 @@ populate_device_mlo_capabilities(em_device_info_t *device_info,
     for (i = 0; i < num_radios; i++) {
         radio = &decoded_params->radios[i];
 
-        radio_index = convert_radio_name_to_radio_index(radio->name);
+        radio_index = convert_radio_name_to_radio_index((char*)radio->name);
         if (radio_index < 0 || (unsigned int)radio_index >= MAX_NUM_RADIOS) {
             continue;
         }
@@ -2162,7 +2162,7 @@ webconfig_error_t translate_vap_object_to_easymesh_for_dml(webconfig_subdoc_data
     em_bss_info_t *em_bss_info;
     wifi_vap_info_map_t *vap_map;
     em_ssid_2_vid_map_info_t *ssid_vid_map = NULL;
-    em_ssid_2_vid_map_info_t *ssid_vid_row;
+    em_ssid_2_vid_map_info_t *ssid_vid_row = NULL;
     webconfig_external_easymesh_t *proto;
     webconfig_subdoc_decoded_data_t *decoded_params;
     //wifi_hal_capability_t *hal_cap;
@@ -2316,7 +2316,7 @@ webconfig_error_t translate_vap_object_to_easymesh_for_dml(webconfig_subdoc_data
 webconfig_error_t translate_vap_object_to_easymesh_bss_info(webconfig_subdoc_data_t *data,char *vap_name)
 {
     em_bss_info_t *vap_info_row;
-    em_ssid_2_vid_map_info_t *ssid_vid_row;
+    em_ssid_2_vid_map_info_t *ssid_vid_row = NULL;
     mac_address_t rmac;
     wifi_vap_info_map_t *vap_map;
     webconfig_external_easymesh_t *proto;
@@ -2446,7 +2446,7 @@ webconfig_error_t translate_per_radio_vap_object_to_easymesh_bss_info(webconfig_
 {
     //em_bss_info_t *em_vap_info;
     em_bss_info_t *vap_info_row;
-    em_ssid_2_vid_map_info_t *ssid_vid_row;
+    em_ssid_2_vid_map_info_t *ssid_vid_row = NULL;
     wifi_vap_info_map_t *vap_map;
     webconfig_external_easymesh_t *proto;
     webconfig_subdoc_decoded_data_t *decoded_params;
@@ -3466,7 +3466,7 @@ webconfig_error_t   translate_radio_object_from_easymesh_to_dml(webconfig_subdoc
 //translate_vap_object_from_easymesh_to_dml() converts data elements of em_bss_info_t of  easymesh to Onewifi
 webconfig_error_t   translate_vap_object_from_easymesh_to_dml(webconfig_subdoc_data_t *data)
 {
-    em_bss_info_t     *em_vap_info;
+    em_bss_info_t     *em_vap_info = NULL;
     em_bss_info_t     *vap_info_row;
     wifi_vap_info_map_t *vap_map;
     webconfig_external_easymesh_t *proto;
