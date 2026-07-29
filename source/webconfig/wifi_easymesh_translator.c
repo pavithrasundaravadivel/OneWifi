@@ -113,6 +113,36 @@ unsigned int translate_auth_type_from_easymesh(unsigned int authtype)
     }
 }
 
+#ifdef EM_APP
+// the ap metrics report decoder mallocs per-vap sta arrays into the decoded
+// params (see decode_em_ap_metrics_report_object); webconfig_data_free only
+// frees u.encoded.raw, so they must be freed here after translation
+static void webconfig_easymesh_free_ap_metrics_report(webconfig_subdoc_data_t *data)
+{
+    webconfig_subdoc_decoded_data_t *decoded = &data->u.decoded;
+    int i, j;
+
+    if (data->type != webconfig_subdoc_type_em_ap_metrics_report) {
+        return;
+    }
+
+    for (i = 0; i < MAX_NUM_RADIOS; i++) {
+        for (j = 0; j < MAX_NUM_VAP_PER_RADIO; j++) {
+            em_vap_metrics_t *vap_report = &decoded->em_ap_metrics_report.radio_reports[i].vap_reports[j];
+
+            if (vap_report->sta_traffic_stats != NULL) {
+                free(vap_report->sta_traffic_stats);
+                vap_report->sta_traffic_stats = NULL;
+            }
+            if (vap_report->sta_link_metrics != NULL) {
+                free(vap_report->sta_link_metrics);
+                vap_report->sta_link_metrics = NULL;
+            }
+        }
+    }
+}
+#endif
+
 // webconfig_easymesh_decode() will convert the onewifi structures to easymesh structures
 webconfig_error_t webconfig_easymesh_decode(webconfig_t *config, const char *str,
         webconfig_external_easymesh_t *data,
@@ -130,6 +160,9 @@ webconfig_error_t webconfig_easymesh_decode(webconfig_t *config, const char *str
     wifi_util_info_print(WIFI_WEBCONFIG,"%s:%d: Easymesh decode subdoc type %d sucessfully\n", __func__, __LINE__, webconfig_easymesh_data.type);
     *type = webconfig_easymesh_data.type;
     //debug_external_protos(&webconfig_easymesh_data, __func__, __LINE__);
+#ifdef EM_APP
+    webconfig_easymesh_free_ap_metrics_report(&webconfig_easymesh_data);
+#endif
     webconfig_data_free(&webconfig_easymesh_data);
     return webconfig_error_none;
 }
@@ -328,7 +361,16 @@ webconfig_error_t   translate_device_object_to_easymesh_for_dml(webconfig_subdoc
     memcpy(device_info->backhaul_alid.mac, wifi_prop->al_1905_mac, sizeof(mac_address_t));
     interfacename_from_mac((const mac_address_t *)device_info->backhaul_alid.mac,device_info->backhaul_alid.name);
     //proto->set_num_radio(proto->data_model, wifi_prop->numRadios);
+    /* Report the device's regulatory country as Network.Device.{i}.CountryCode.
+       Default to US, override only for an in range enum (conversion does not bounds check). */
     snprintf(device_info->country_code, sizeof(device_info->country_code), "US");
+    if (decoded_params->num_radios > 0) {
+        wifi_countrycode_type_t cc_enum = decoded_params->radios[0].oper.countryCode;
+        if ((unsigned int)cc_enum < MAX_WIFI_COUNTRYCODE) {
+            country_code_conversion(&cc_enum, device_info->country_code,
+                                    sizeof(device_info->country_code), ENUM_TO_STRING);
+        }
+    }
     for (unsigned int i = 0; i < decoded_params->num_radios; i++) {
         radio = &decoded_params->radios[i];
         dfs_enable  = radio->oper.DfsEnabled;
