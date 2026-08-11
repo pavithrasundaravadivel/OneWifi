@@ -1171,7 +1171,6 @@ typedef struct {
 
 typedef struct {
     bssid_t     bssid;
-    em_string_t sta_client_type;
     unsigned int  time_delta_ms;
     unsigned int  est_mac_data_rate_dl;
     unsigned int  est_mac_data_rate_ul;
@@ -2310,8 +2309,8 @@ typedef enum {
     em_state_ctrl_avail_spectrum_inquiry_pending,
     em_state_ctrl_bsta_cap_pending,
     em_state_ctrl_topo_publish_pending,
-    em_state_ctrl_unassoc_sta_link_metrics_pending, 
     em_state_ctrl_topo_published,
+    em_state_ctrl_unassoc_sta_link_metrics_pending, 
 
     em_state_max,
 } em_state_t;
