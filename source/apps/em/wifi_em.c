@@ -2082,7 +2082,7 @@ static int ap_report_push_cb(em_ap_report_callback_arg_t *args)
                 wifi_util_dbg_print(WIFI_APPS, "%s:%d count is %d\n", __func__, __LINE__, cnt);
                 vap_report->sta_cnt = cnt;
                 vap_report->vap_metrics.num_of_assoc_stas = cnt;
-                wifi_util_dbg_print(WIFI_APPS, "%s:%d sta_cnt is %d and assoc_stas is %d\n", vap_report->sta_cnt, vap_report->vap_metrics.num_of_assoc_stas);
+                wifi_util_dbg_print(WIFI_APPS, "%s:%d sta_cnt is %d and assoc_stas is %d\n", __func__, __LINE__, vap_report->sta_cnt, vap_report->vap_metrics.num_of_assoc_stas);
                 break;
 
             default:
