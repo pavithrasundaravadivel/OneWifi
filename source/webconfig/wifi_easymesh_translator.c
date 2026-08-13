@@ -1826,6 +1826,10 @@ webconfig_error_t translate_ap_metrics_report_to_easy_mesh_bss_info(webconfig_su
 
             int found = 0;
             for (int k = 0; k < MAX_NUM_VAP_PER_RADIO; k++) {
+                wifi_util_dbg_print(WIFI_WEBCONFIG,"%s:%d: radio_index %d ap_metrics_bssid %02x:%02x:%02x:%02x:%02x:%02x vap_bss_info %02x:%02x:%02x:%02x:%02x:%02x\n", __func__, __LINE__, k,
+                ap_metrics->vap_metrics.bssid[0], ap_metrics->vap_metrics.bssid[1], ap_metrics->vap_metrics.bssid[2],
+                ap_metrics->vap_metrics.bssid[3], ap_metrics->vap_metrics.bssid[4], ap_metrics->vap_metrics.bssid[5], vap->u.bss_info.bssid[0], vap->u.bss_info.bssid[1], vap->u.bss_info.bssid[2],
+                vap->u.bss_info.bssid[3], vap->u.bss_info.bssid[4], vap->u.bss_info.bssid[5]);
                 ap_metrics = &em_ap_report->radio_reports[i].vap_reports[k];
                 if (memcmp(ap_metrics->vap_metrics.bssid, vap->u.bss_info.bssid, sizeof(bssid_t)) == 0) {
                     found = 1;
