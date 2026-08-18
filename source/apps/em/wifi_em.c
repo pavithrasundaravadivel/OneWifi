@@ -3426,6 +3426,42 @@ bus_error_t set_disconn_scan_none_state(char *name, raw_data_t *p_data, bus_user
     return bus_error_success;
 }
 
+static bus_error_t get_client_type_handler(char const* methodName, bus_data_prop_t *inParams, bus_data_prop_t *outParams, void *asyncHandle)
+{
+    char client_type_str[32] = {0};
+    (void)methodName;
+    (void)asyncHandle;
+
+    char *client_mac = inParams->value.raw_data.bytes;
+
+    if (client_mac == NULL) {
+        wifi_util_dbg_print(WIFI_APPS, "%s:%d Input MAC is empty\n", __func__, __LINE__);
+        return bus_error_element_name_missing;
+    }
+    
+    wifi_util_dbg_print(WIFI_APPS, "%s:%d The client mac is %s\n", __func__, __LINE__, client_mac);
+    sta_client_info_t *cli_data = NULL;
+    cli_data = hash_map_get(client_type_info.sta_client_type.client_type_map, client_mac);
+    if (cli_data) {
+	    wifi_util_dbg_print(WIFI_APPS, "%s:%d Client type for %s is %s\n", __func__, __LINE__, client_mac, cli_data->client_type);
+        outParams->value.data_type = bus_data_type_bytes;
+        outParams->value.raw_data.bytes = malloc(sizeof(char)* sizeof(client_type_str));
+        if (outParams->value.raw_data.bytes == NULL) {
+            wifi_util_dbg_print(WIFI_APPS, "%s:%d memory allocation failed\n", __func__, __LINE__);
+            return bus_error_general;
+        }
+        memset(outParams->value.raw_data.bytes, '\0', sizeof(client_type_str));
+        memcpy(outParams->value.raw_data.bytes, cli_data->client_type, sizeof(client_type_str));
+        outParams->value.raw_data_len = sizeof(client_type_str);
+        outParams->is_data_set = true;
+        outParams->status = bus_error_success;
+        outParams->ref_count = 1;
+        outParams->next_data = NULL;
+        return bus_error_success;
+    }
+    return bus_error_general;
+}
+
 int em_init(wifi_app_t *app, unsigned int create_flag)
 {
     int rc = RETURN_OK;
@@ -3466,6 +3502,9 @@ int em_init(wifi_app_t *app, unsigned int create_flag)
             { bus_data_type_bytes, true, 0, 0, 0, NULL } },
         { WIFI_EM_FAILED_CONNECTION, bus_element_type_event,
             { NULL, NULL, NULL, NULL, NULL, NULL }, slow_speed, ZERO_TABLE,
+            { bus_data_type_string, false, 0, 0, 0, NULL } },
+        { WIFI_EM_CLIENT_TYPE, bus_element_type_property,
+            {NULL, NULL, NULL, NULL, NULL, get_client_type_handler}, slow_speed, ZERO_TABLE,
             { bus_data_type_string, false, 0, 0, 0, NULL } }
     };
 
