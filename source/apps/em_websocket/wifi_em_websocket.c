@@ -38,9 +38,6 @@
 #define EM_TOPOLOGY_EVENT_NAME     "Device.WiFi.DataElements.Network.Topology"
 #define EM_TOPOLOGY_SUBSCRIBE_RETRY_SEC 1
 
-/* Read and validate the server response after each data frame. */
-#define EM_TOPO_WAIT_WS_RESPONSE   1
-
 typedef struct wifi_app wifi_app_t;
 
 /* Default base URL — SAT token is appended as ?token=<JWT> after fetch */
@@ -478,127 +475,6 @@ cleanup:
     return rc;
 }
 
-/* Read one application frame, answering pings and ignoring pongs. */
-static int em_topo_recv_ws_response(char *out, size_t out_len)
-{
-    for (;;) {
-        unsigned char hdr[2] = {0};
-        unsigned char ext_len[8] = {0};
-        unsigned char mask[4] = {0};
-        unsigned char *payload = NULL;
-        size_t payload_len;
-        int is_masked;
-        unsigned char opcode;
-        int rc = -1;
-
-        pthread_mutex_lock(&g_em_topo_sock_mtx);
-
-        if (out == NULL || out_len == 0 || g_em_topo_socket_fd < 0) {
-            pthread_mutex_unlock(&g_em_topo_sock_mtx);
-            return -1;
-        }
-        out[0] = '\0';
-
-        wifi_util_dbg_print(WIFI_APPS,
-            "[TOPO-WS] recv_ws_response: waiting for frame header");
-        if (em_topo_read_exact(hdr, sizeof(hdr)) != 0) {
-            wifi_util_dbg_print(WIFI_APPS,
-                "[TOPO-WS] recv_ws_response: failed reading frame header");
-            pthread_mutex_unlock(&g_em_topo_sock_mtx);
-            return -1;
-        }
-
-        opcode = (unsigned char)(hdr[0] & 0x0F);
-        is_masked = ((hdr[1] & 0x80) != 0);
-        payload_len = (size_t)(hdr[1] & 0x7F);
-
-        if (payload_len == 126) {
-            if (em_topo_read_exact(ext_len, 2) != 0) {
-                pthread_mutex_unlock(&g_em_topo_sock_mtx);
-                return -1;
-            }
-            payload_len = ((size_t)ext_len[0] << 8) | (size_t)ext_len[1];
-        } else if (payload_len == 127) {
-            if (em_topo_read_exact(ext_len, sizeof(ext_len)) != 0) {
-                pthread_mutex_unlock(&g_em_topo_sock_mtx);
-                return -1;
-            }
-            if (ext_len[0] || ext_len[1] || ext_len[2] || ext_len[3]) {
-                wifi_util_dbg_print(WIFI_APPS,
-                    "[TOPO-WS] response payload is too large");
-                pthread_mutex_unlock(&g_em_topo_sock_mtx);
-                return -1;
-            }
-            payload_len = ((size_t)ext_len[4] << 24) |
-                          ((size_t)ext_len[5] << 16) |
-                          ((size_t)ext_len[6] << 8) |
-                          (size_t)ext_len[7];
-        }
-
-        if (is_masked && em_topo_read_exact(mask, sizeof(mask)) != 0) {
-            pthread_mutex_unlock(&g_em_topo_sock_mtx);
-            return -1;
-        }
-
-        payload = malloc(payload_len + 1);
-        if (payload == NULL) {
-            wifi_util_dbg_print(WIFI_APPS,
-                "[TOPO-WS] response payload allocation failed (%zu bytes)",
-                payload_len + 1);
-            pthread_mutex_unlock(&g_em_topo_sock_mtx);
-            return -1;
-        }
-
-        if (payload_len > 0 &&
-            em_topo_read_exact(payload, payload_len) != 0) {
-            free(payload);
-            pthread_mutex_unlock(&g_em_topo_sock_mtx);
-            return -1;
-        }
-
-        if (is_masked) {
-            for (size_t i = 0; i < payload_len; i++) {
-                payload[i] ^= mask[i % 4];
-            }
-        }
-        payload[payload_len] = '\0';
-
-        if (opcode == 0x9) {
-            wifi_util_dbg_print(WIFI_APPS,
-                "[TOPO-WS] PING received (len=%zu), sending PONG",
-                payload_len);
-            if (em_topo_send_ws_control_frame(0xA, payload, payload_len) != 0) {
-                free(payload);
-                pthread_mutex_unlock(&g_em_topo_sock_mtx);
-                return -1;
-            }
-            free(payload);
-            pthread_mutex_unlock(&g_em_topo_sock_mtx);
-            continue;
-        }
-
-        if (opcode == 0xA) {
-            free(payload);
-            pthread_mutex_unlock(&g_em_topo_sock_mtx);
-            continue;
-        }
-
-        if (opcode == 0x8) {
-            wifi_util_dbg_print(WIFI_APPS,
-                "[TOPO-WS] websocket close frame received");
-            free(payload);
-            pthread_mutex_unlock(&g_em_topo_sock_mtx);
-            return -1;
-        }
-
-        snprintf(out, out_len, "%s", (const char *)payload);
-        rc = (int)payload_len;
-        free(payload);
-        pthread_mutex_unlock(&g_em_topo_sock_mtx);
-        return rc;
-    }
-}
-
 static void *em_topo_ping_listener_thread(void *arg)
 {
     (void)arg;
@@ -653,6 +529,7 @@ static void *em_topo_ping_listener_thread(void *arg)
             unsigned char *payload = NULL;
             size_t payload_len;
             int is_masked;
+            int close_received = 0;
 
             if (em_topo_read_exact(hdr, sizeof(hdr)) != 0) {
                 g_em_topo_ws_ready = 0;
@@ -663,6 +540,9 @@ static void *em_topo_ping_listener_thread(void *arg)
             opcode = (unsigned char)(hdr[0] & 0x0F);
             is_masked = ((hdr[1] & 0x80) != 0);
             payload_len = (size_t)(hdr[1] & 0x7F);
+            wifi_util_info_print(WIFI_APPS,
+                "[TOPO-WS] ping-listener: frame opcode=0x%X payload_len=%zu\n",
+                (unsigned int)opcode, payload_len);
 
             if ((opcode & 0x08) && payload_len > 125) {
                 wifi_util_dbg_print(WIFI_APPS,
@@ -722,6 +602,10 @@ static void *em_topo_ping_listener_thread(void *arg)
             }
 
             if (opcode == 0x9) {
+                wifi_util_info_print(WIFI_APPS,
+                    "[TOPO-WS] ping-listener: PING received (len=%zu), "
+                    "sending PONG\n",
+                    payload_len);
                 if (em_topo_send_ws_control_frame(0xA, payload,
                         payload_len) != 0) {
                     free(payload);
@@ -729,16 +613,34 @@ static void *em_topo_ping_listener_thread(void *arg)
                     pthread_mutex_unlock(&g_em_topo_sock_mtx);
                     continue;
                 }
+                wifi_util_info_print(WIFI_APPS,
+                    "[TOPO-WS] ping-listener: PONG sent (len=%zu)\n",
+                    payload_len);
+            } else if (opcode == 0xA) {
+                wifi_util_dbg_print(WIFI_APPS,
+                    "[TOPO-WS] PONG received (len=%zu)", payload_len);
             } else if (opcode == 0x8) {
+                wifi_util_dbg_print(WIFI_APPS,
+                    "[TOPO-WS] websocket close frame received");
                 free(payload);
-                pthread_mutex_unlock(&g_em_topo_sock_mtx);
-                em_topo_close();
-                continue;
+                g_em_topo_ws_ready = 0;
+                close_received = 1;
+            } else {
+                wifi_util_dbg_print(WIFI_APPS,
+                    "[TOPO-WS] application frame received "
+                    "(opcode=0x%X len=%zu)",
+                    (unsigned int)opcode, payload_len);
             }
 
-            free(payload);
+            if (!close_received) {
+                free(payload);
+            }
+            pthread_mutex_unlock(&g_em_topo_sock_mtx);
+
+            if (close_received) {
+                em_topo_close();
+            }
         }
-        pthread_mutex_unlock(&g_em_topo_sock_mtx);
     }
 
     wifi_util_dbg_print(WIFI_APPS,
@@ -768,6 +670,23 @@ static void em_topo_start_ping_listener(void)
             "[TOPO-WS] ping-listener thread created (tid=%lu)",
             (unsigned long)g_em_topo_ping_tid);
     }
+}
+
+static void em_topo_stop_ping_listener(void)
+{
+    int fd;
+
+    if (g_em_topo_ping_tid == 0) {
+        return;
+    }
+
+    g_em_topo_listen_stop = 1;
+    fd = g_em_topo_socket_fd;
+    if (fd >= 0) {
+        shutdown(fd, SHUT_RDWR);
+    }
+    pthread_join(g_em_topo_ping_tid, NULL);
+    g_em_topo_ping_tid = 0;
 }
 
 static void em_topo_close(void)
@@ -1136,22 +1055,6 @@ static void em_topo_stream_send_topology(const char *topology_json)
                 wifi_util_dbg_print(WIFI_APPS,
                     "[TOPO-WS] DataFrame sent successfully #%llu len=%zu",
                     g_em_topo_order_id, jlen);
-#if EM_TOPO_WAIT_WS_RESPONSE
-                {
-                    char ws_response[512] = {0};
-                    int response_len = em_topo_recv_ws_response(
-                        ws_response, sizeof(ws_response));
-                    if (response_len < 0) {
-                        wifi_util_dbg_print(WIFI_APPS,
-                            "[TOPO-WS] failed to read websocket response #%llu, closing connection",
-                            g_em_topo_order_id);
-                        em_topo_close();
-                        continue;
-                    }
-                    wifi_util_dbg_print(WIFI_APPS,
-                        "[TOPO-WS] websocket response: %s", ws_response);
-                }
-#endif
                 break;
             }
 
@@ -1246,6 +1149,8 @@ int em_websocket_deinit(wifi_app_t *app)
             pthread_join(g_em_topo_subscribe_tid, NULL);
             g_em_topo_subscribe_tid = 0;
         }
+        em_topo_stop_ping_listener();
+        em_topo_close();
         if (g_em_topo_subscribed) {
             get_bus_descriptor()->bus_event_unsubs_fn(
                 &app->handle, EM_TOPOLOGY_EVENT_NAME);
