@@ -35,6 +35,8 @@
 #define EM_TOPO_STREAM_TOKEN_SIZE  4096
 #define EM_TOPO_GATEWAY_MAC_SIZE   18
 #define EM_TOPO_SSL_KEYLOG_FILE    "/tmp/em_topo_ssl_keys.log"
+#define EM_TOPOLOGY_EVENT_NAME     "Device.WiFi.DataElements.Network.Topology"
+#define EM_TOPOLOGY_SUBSCRIBE_RETRY_SEC 1
 
 /* Read and validate the server response after each data frame. */
 #define EM_TOPO_WAIT_WS_RESPONSE   1
@@ -1126,27 +1128,30 @@ static void em_topo_stream_send_topology(const char *topology_json)
 
 #endif /* EM_WEBSOCKET_PUSH */
 
-static void get_topology_handler(char *event_name, bus_data_prop_t *p_data)
+static bus_error_t get_topology_handler(char *event_name, bus_data_prop_t *p_data,
+                                        void *user_data)
 {
     char *raw_data = NULL;
     size_t raw_data_len;
 
+    (void)user_data;
+
     if (event_name == NULL || p_data == NULL ||
-        strcmp(event_name, "Device.WiFi.DataElements.Network.Topology") != 0) {
+        strcmp(event_name, EM_TOPOLOGY_EVENT_NAME) != 0) {
         wifi_util_error_print(WIFI_APPS, "%s:%d: Invalid topology event\n", __func__, __LINE__);
-        return;
+        return bus_error_invalid_input;
     }
 
     raw_data_len = p_data->value.raw_data_len;
     if (p_data->value.raw_data.bytes == NULL || raw_data_len == 0) {
         wifi_util_error_print(WIFI_APPS, "%s:%d: Empty topology payload\n", __func__, __LINE__);
-        return;
+        return bus_error_invalid_input;
     }
 
     raw_data = malloc(raw_data_len + 1);
     if (raw_data == NULL) {
         wifi_util_error_print(WIFI_APPS, "%s:%d: Memory allocation failed for raw_data\n", __func__, __LINE__);
-        return;
+        return bus_error_out_of_resources;
     }
     memcpy(raw_data, p_data->value.raw_data.bytes, raw_data_len);
     raw_data[raw_data_len] = '\0';
@@ -1154,23 +1159,46 @@ static void get_topology_handler(char *event_name, bus_data_prop_t *p_data)
 
     em_topo_stream_send_topology(raw_data);
     free(raw_data);
+    return bus_error_success;
 }
+
 int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
 {
     int rc = RETURN_OK;
     char *component_name = "WifiEMWebsocket";
+    unsigned int subscribe_attempt = 0;
+
+    rc = get_bus_descriptor()->bus_open_fn(&app->handle, component_name);
+    if (rc != bus_error_success) {
+	    wifi_util_error_print(WIFI_APPS,
+	        "%s:%d bus: bus_open_fn open failed for component:%s, rc:%d\n",
+	        __func__, __LINE__, component_name, rc);
+	    return RETURN_ERR;
+    }
+
+    /* The websocket app cannot function without topology notifications. Keep
+     * waiting until the EasyMesh RBUS model has registered the event. */
+    while (true) {
+        rc = get_bus_descriptor()->bus_event_subs_fn(
+            &app->handle, EM_TOPOLOGY_EVENT_NAME, get_topology_handler, NULL, 1000);
+        if (rc == bus_error_success) {
+            break;
+        }
+
+        subscribe_attempt++;
+        if (subscribe_attempt == 1 ||
+            (subscribe_attempt % 10) == 0) {
+            wifi_util_error_print(WIFI_APPS,
+                "%s:%d waiting for RBUS model %s (attempt:%u rc:%d)\n",
+                __func__, __LINE__, EM_TOPOLOGY_EVENT_NAME,
+                subscribe_attempt, rc);
+        }
+        sleep(EM_TOPOLOGY_SUBSCRIBE_RETRY_SEC);
+    }
 
     signal(SIGPIPE, SIG_IGN);
     em_topo_load_gateway_mac();
     em_topo_start_ping_listener();
-
-    rc = get_bus_descriptor()->bus_event_subs_fn(&app->handle, "Device.WiFi.DataElements.Network.Topology", get_topology_handler, NULL, 0);
-    if (rc != bus_error_success) {
-	    wifi_util_error_print(WIFI_APPS,
-			   "%s:%d bus: bus_subscribe_fn failed for component:%s, rc:%d\n", __func__, __LINE__,
-			    component_name, rc);
-	    return RETURN_ERR;
-    }
 
     wifi_util_info_print(WIFI_APPS, "%s:%d: Init em websocket app %s\n", __func__, __LINE__,
 		    rc ? "failure" : "success");
@@ -1184,5 +1212,10 @@ int em_websocket_event(wifi_app_t *app, wifi_event_t *event)
 
 int em_websocket_deinit(wifi_app_t *app)
 {
+    if (app != NULL) {
+        get_bus_descriptor()->bus_event_unsubs_fn(
+            &app->handle, EM_TOPOLOGY_EVENT_NAME);
+        get_bus_descriptor()->bus_close_fn(&app->handle);
+    }
     return RETURN_OK;
 }
