@@ -58,6 +58,9 @@ static pthread_mutex_t    g_em_topo_sock_mtx    = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t          g_em_topo_ping_tid     = 0;
 static volatile int       g_em_topo_listen_stop  = 0;
 static volatile int       g_em_topo_ws_ready     = 0;
+static pthread_t          g_em_topo_subscribe_tid = 0;
+static volatile int       g_em_topo_subscribe_stop = 0;
+static volatile int       g_em_topo_subscribed = 0;
 
 typedef struct {
     bool     use_tls;
@@ -67,6 +70,9 @@ typedef struct {
 } em_topo_url_info_t;
 
 static void em_topo_close(void);
+static bus_error_t get_topology_handler(char *event_name,
+                                        bus_data_prop_t *p_data,
+                                        void *user_data);
 
 #if OPENSSL_VERSION_NUMBER >= 0x10101000L
 static void em_topo_ssl_keylog_cb(const SSL *ssl, const char *line)
@@ -827,6 +833,39 @@ static void em_topo_load_gateway_mac(void)
         g_em_topo_gateway_mac);
 }
 
+static void *em_topo_subscription_thread(void *arg)
+{
+    wifi_app_t *app = (wifi_app_t *)arg;
+    unsigned int subscribe_attempt = 0;
+    bus_error_t rc;
+
+    while (!g_em_topo_subscribe_stop) {
+        rc = get_bus_descriptor()->bus_event_subs_fn(
+            &app->handle, EM_TOPOLOGY_EVENT_NAME, get_topology_handler, NULL, 1000);
+        if (rc == bus_error_success) {
+            g_em_topo_subscribed = 1;
+            em_topo_load_gateway_mac();
+            em_topo_start_ping_listener();
+            wifi_util_info_print(WIFI_APPS,
+                "%s:%d: RBUS model registered; topology subscription succeeded\n",
+                __func__, __LINE__);
+            return NULL;
+        }
+
+        subscribe_attempt++;
+        if (subscribe_attempt == 1 ||
+            (subscribe_attempt % 10) == 0) {
+            wifi_util_error_print(WIFI_APPS,
+                "%s:%d waiting for RBUS model %s (attempt:%u rc:%d)\n",
+                __func__, __LINE__, EM_TOPOLOGY_EVENT_NAME,
+                subscribe_attempt, rc);
+        }
+        sleep(EM_TOPOLOGY_SUBSCRIBE_RETRY_SEC);
+    }
+
+    return NULL;
+}
+
 /* --- Entry point: called from the Network Topology event handler --- */
 static void em_topo_stream_send_topology(const char *topology_json)
 {
@@ -1166,7 +1205,6 @@ int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
 {
     int rc = RETURN_OK;
     char *component_name = "WifiEMWebsocket";
-    unsigned int subscribe_attempt = 0;
 
     rc = get_bus_descriptor()->bus_open_fn(&app->handle, component_name);
     if (rc != bus_error_success) {
@@ -1176,33 +1214,23 @@ int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
 	    return RETURN_ERR;
     }
 
-    /* The websocket app cannot function without topology notifications. Keep
-     * waiting until the EasyMesh RBUS model has registered the event. */
-    while (true) {
-        rc = get_bus_descriptor()->bus_event_subs_fn(
-            &app->handle, EM_TOPOLOGY_EVENT_NAME, get_topology_handler, NULL, 1000);
-        if (rc == bus_error_success) {
-            break;
-        }
-
-        subscribe_attempt++;
-        if (subscribe_attempt == 1 ||
-            (subscribe_attempt % 10) == 0) {
-            wifi_util_error_print(WIFI_APPS,
-                "%s:%d waiting for RBUS model %s (attempt:%u rc:%d)\n",
-                __func__, __LINE__, EM_TOPOLOGY_EVENT_NAME,
-                subscribe_attempt, rc);
-        }
-        sleep(EM_TOPOLOGY_SUBSCRIBE_RETRY_SEC);
-    }
-
     signal(SIGPIPE, SIG_IGN);
-    em_topo_load_gateway_mac();
-    em_topo_start_ping_listener();
+    g_em_topo_subscribe_stop = 0;
+    g_em_topo_subscribed = 0;
+    rc = pthread_create(&g_em_topo_subscribe_tid, NULL,
+        em_topo_subscription_thread, app);
+    if (rc != 0) {
+        wifi_util_error_print(WIFI_APPS,
+            "%s:%d: failed to create RBUS subscription thread, rc:%d\n",
+            __func__, __LINE__, rc);
+        g_em_topo_subscribe_tid = 0;
+        get_bus_descriptor()->bus_close_fn(&app->handle);
+        return RETURN_ERR;
+    }
 
     wifi_util_info_print(WIFI_APPS, "%s:%d: Init em websocket app %s\n", __func__, __LINE__,
 		    rc ? "failure" : "success");
-    return rc;
+    return RETURN_OK;
 }
 
 int em_websocket_event(wifi_app_t *app, wifi_event_t *event)
@@ -1213,8 +1241,16 @@ int em_websocket_event(wifi_app_t *app, wifi_event_t *event)
 int em_websocket_deinit(wifi_app_t *app)
 {
     if (app != NULL) {
-        get_bus_descriptor()->bus_event_unsubs_fn(
-            &app->handle, EM_TOPOLOGY_EVENT_NAME);
+        g_em_topo_subscribe_stop = 1;
+        if (g_em_topo_subscribe_tid != 0) {
+            pthread_join(g_em_topo_subscribe_tid, NULL);
+            g_em_topo_subscribe_tid = 0;
+        }
+        if (g_em_topo_subscribed) {
+            get_bus_descriptor()->bus_event_unsubs_fn(
+                &app->handle, EM_TOPOLOGY_EVENT_NAME);
+            g_em_topo_subscribed = 0;
+        }
         get_bus_descriptor()->bus_close_fn(&app->handle);
     }
     return RETURN_OK;
