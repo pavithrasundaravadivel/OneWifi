@@ -26,6 +26,7 @@ extern "C" {
 
 #include "wifi_hal.h"
 #include "wifi_base.h"
+#include "wifi_events.h"
 
 #include "wifi_analytics.h"
 #include "wifi_levl.h"

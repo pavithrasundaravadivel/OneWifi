@@ -272,6 +272,9 @@ extern int em_init(wifi_app_t *app, unsigned int create_flag);
 extern int em_deinit(wifi_app_t *app);
 extern int em_update(wifi_app_t *app);
 extern int em_event(wifi_app_t *app, wifi_event_t *event);
+extern int em_websocket_init(wifi_app_t *app, unsigned int create_flag);
+extern int em_websocket_deinit(wifi_app_t *app);
+extern int em_websocket_event(wifi_app_t *app, wifi_event_t *event);
 #else
 int em_init(wifi_app_t *app, unsigned int create_flag)
 {
@@ -289,6 +292,21 @@ int em_update(wifi_app_t *app)
 }
 
 int em_event(wifi_app_t *app, wifi_event_t *event)
+{
+    return 0;
+}
+
+int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
+{
+    return 0;
+}
+
+int em_websocket_deinit(wifi_app_t *app)
+{
+    return 0;
+}
+
+int em_websocket_event(wifi_app_t *app, wifi_event_t *event)
 {
     return 0;
 }
@@ -368,6 +386,14 @@ wifi_app_descriptor_t app_desc[] = {
         "Easy Mesh",
         em_init, em_event, em_deinit,
         NULL,NULL
+    },
+    {
+        wifi_app_inst_easymesh_websocket, 0,
+        wifi_event_type_monitor | wifi_event_type_webconfig | wifi_event_type_hal_ind | wifi_event_type_command,
+        true, true,
+        "Easy Mesh Websocket",
+        em_websocket_init, em_websocket_event, em_websocket_deinit,
+        NULL,NULL 
     },
 #endif
 #if ONEWIFI_CSI_APP_SUPPORT
