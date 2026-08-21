@@ -36,6 +36,7 @@
 #define EM_TOPO_GATEWAY_MAC_SIZE   18
 #define EM_TOPO_SSL_KEYLOG_FILE    "/tmp/em_topo_ssl_keys.log"
 #define EM_TOPOLOGY_EVENT_NAME     "Device.WiFi.DataElements.Network.Topology"
+#define EM_WEI_DATA_EVENT_NAME     "Device.WiFi.EM.WEIData"
 #define EM_TOPOLOGY_SUBSCRIBE_RETRY_SEC 1
 
 typedef struct wifi_app wifi_app_t;
@@ -58,6 +59,7 @@ static volatile int       g_em_topo_ws_ready     = 0;
 static pthread_t          g_em_topo_subscribe_tid = 0;
 static volatile int       g_em_topo_subscribe_stop = 0;
 static volatile int       g_em_topo_subscribed = 0;
+static volatile int       g_em_wei_data_subscribed = 0;
 
 typedef struct {
     bool     use_tls;
@@ -68,6 +70,9 @@ typedef struct {
 
 static void em_topo_close(void);
 static bus_error_t get_topology_handler(char *event_name,
+                                        bus_data_prop_t *p_data,
+                                        void *user_data);
+static bus_error_t get_wei_data_handler(char *event_name,
                                         bus_data_prop_t *p_data,
                                         void *user_data);
 
@@ -1104,6 +1109,47 @@ static bus_error_t get_topology_handler(char *event_name, bus_data_prop_t *p_dat
     return bus_error_success;
 }
 
+static bus_error_t get_wei_data_handler(char *event_name, bus_data_prop_t *p_data,
+                                        void *user_data)
+{
+    cJSON *parsed;
+    char *json_str;
+
+    (void)user_data;
+
+    if (event_name == NULL || p_data == NULL ||
+        strcmp(event_name, EM_WEI_DATA_EVENT_NAME) != 0) {
+        wifi_util_error_print(WIFI_APPS, "%s:%d: Invalid WEI data event\n", __func__, __LINE__);
+        return bus_error_invalid_input;
+    }
+
+    if (p_data->value.raw_data.bytes == NULL || p_data->value.raw_data_len == 0) {
+        wifi_util_error_print(WIFI_APPS, "%s:%d: Empty WEI data payload\n",
+            __func__, __LINE__);
+        return bus_error_invalid_input;
+    }
+
+    parsed = cJSON_ParseWithLength(
+        (const char *)p_data->value.raw_data.bytes, p_data->value.raw_data_len);
+    if (parsed == NULL) {
+        wifi_util_error_print(WIFI_APPS, "%s:%d: WEI data payload is not valid JSON\n",
+            __func__, __LINE__);
+        return bus_error_invalid_input;
+    }
+
+    json_str = cJSON_PrintUnformatted(parsed);
+    cJSON_Delete(parsed);
+    if (json_str == NULL) {
+        wifi_util_error_print(WIFI_APPS, "%s:%d: Failed to serialize WEI data payload\n",
+            __func__, __LINE__);
+        return bus_error_general;
+    }
+
+    em_topo_stream_send_topology(json_str);
+    free(json_str);
+    return bus_error_success;
+}
+
 int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
 {
     int rc = RETURN_OK;
@@ -1118,6 +1164,17 @@ int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
     }
 
     signal(SIGPIPE, SIG_IGN);
+    rc = get_bus_descriptor()->bus_event_subs_fn(
+        &app->handle, EM_WEI_DATA_EVENT_NAME, get_wei_data_handler, NULL, 1000);
+    if (rc != bus_error_success) {
+        wifi_util_error_print(WIFI_APPS,
+            "%s:%d: failed to subscribe to %s, rc:%d\n",
+            __func__, __LINE__, EM_WEI_DATA_EVENT_NAME, rc);
+        get_bus_descriptor()->bus_close_fn(&app->handle);
+        return RETURN_ERR;
+    }
+    g_em_wei_data_subscribed = 1;
+
     g_em_topo_subscribe_stop = 0;
     g_em_topo_subscribed = 0;
     rc = pthread_create(&g_em_topo_subscribe_tid, NULL,
@@ -1127,6 +1184,9 @@ int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
             "%s:%d: failed to create RBUS subscription thread, rc:%d\n",
             __func__, __LINE__, rc);
         g_em_topo_subscribe_tid = 0;
+        get_bus_descriptor()->bus_event_unsubs_fn(
+            &app->handle, EM_WEI_DATA_EVENT_NAME);
+        g_em_wei_data_subscribed = 0;
         get_bus_descriptor()->bus_close_fn(&app->handle);
         return RETURN_ERR;
     }
@@ -1155,6 +1215,11 @@ int em_websocket_deinit(wifi_app_t *app)
             get_bus_descriptor()->bus_event_unsubs_fn(
                 &app->handle, EM_TOPOLOGY_EVENT_NAME);
             g_em_topo_subscribed = 0;
+        }
+        if (g_em_wei_data_subscribed) {
+            get_bus_descriptor()->bus_event_unsubs_fn(
+                &app->handle, EM_WEI_DATA_EVENT_NAME);
+            g_em_wei_data_subscribed = 0;
         }
         get_bus_descriptor()->bus_close_fn(&app->handle);
     }
