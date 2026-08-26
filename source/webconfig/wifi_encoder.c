@@ -3562,6 +3562,7 @@ webconfig_error_t encode_sta_link_metrics_object(per_sta_metrics_t *sta_metrics,
     cJSON *link_metrics_arr = cJSON_CreateArray();
     cJSON_AddItemToObject(sta_obj, "Associated STA Link Metrics Report", link_metrics_arr);
 
+    wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Entering with sta_count as %d\n", __func__, __LINE__, sta_cnt);
     for (int i = 0; i < sta_cnt; i++) {
         param_obj = cJSON_CreateObject();
         if (param_obj == NULL) {
@@ -3571,8 +3572,10 @@ webconfig_error_t encode_sta_link_metrics_object(per_sta_metrics_t *sta_metrics,
         cJSON_AddItemToArray(link_metrics_arr, param_obj);
 
         uint8_mac_to_string_mac(sta_metrics[i].sta_mac, mac_str);
+        wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Entering with mac_str %s\n", __func__, __LINE__, mac_str);
         cJSON_AddStringToObject(param_obj, "STA MAC", mac_str);
         cJSON_AddStringToObject(param_obj, "Client Type", (const char *)sta_metrics[i].client_type);
+        wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Entering with client_type as %s\n", __func__, __LINE__, sta_metrics[i].client_type);
 
         // Associated STA Link Metrics
         if (sta_metrics[i].assoc_sta_link_metrics.num_bssid != 0) {
@@ -3592,10 +3595,11 @@ webconfig_error_t encode_sta_link_metrics_object(per_sta_metrics_t *sta_metrics,
                 wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: json create object failed\n", __func__,
                     __LINE__);
             }
-
+            wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Entering\n", __func__, __LINE__);
             cJSON_AddItemToObject(assoc_sta_link_metrics_obj, "Per BSSID Metrics", param_arr);
 
             for (int j = 0; j < sta_metrics[i].assoc_sta_link_metrics.num_bssid; j++) {
+                wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Entering\n", __func__, __LINE__);
                 temp_obj = cJSON_CreateObject();
                 if (temp_obj == NULL) {
                     wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: json create object failed\n", __func__,
@@ -3627,6 +3631,7 @@ webconfig_error_t encode_sta_link_metrics_object(per_sta_metrics_t *sta_metrics,
 
         // Error Code
         if (sta_metrics[i].assoc_sta_link_metrics.num_bssid == 0) {
+            wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Entering\n", __func__, __LINE__);
             error_code_obj = cJSON_CreateObject();
             if (error_code_obj == NULL) {
                 wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: json create object failed\n", __func__,
@@ -3642,6 +3647,7 @@ webconfig_error_t encode_sta_link_metrics_object(per_sta_metrics_t *sta_metrics,
 
         // Associated STA Extended Link Metrics
         if (sta_metrics[i].assoc_sta_ext_link_metrics.num_bssid != 0) {
+            wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Entering\n", __func__, __LINE__);
             assoc_sta_ext_link_metrics_obj = cJSON_CreateObject();
             if (assoc_sta_ext_link_metrics_obj == NULL) {
                 wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: json create object failed\n", __func__,
@@ -3651,6 +3657,7 @@ webconfig_error_t encode_sta_link_metrics_object(per_sta_metrics_t *sta_metrics,
                 assoc_sta_ext_link_metrics_obj);
             cJSON_AddNumberToObject(assoc_sta_ext_link_metrics_obj, "Number of BSSIDs",
                 sta_metrics[i].assoc_sta_ext_link_metrics.num_bssid);
+            wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d: Entering\n", __func__, __LINE__);
 
             param_arr = cJSON_CreateArray();
             if (param_arr == NULL) {
@@ -3840,6 +3847,7 @@ webconfig_error_t encode_em_ap_metrics_report_object(rdk_wifi_radio_t *radio,
         }
 
         if (ap_metrics->is_sta_link_metrics_enabled == true) {
+            wifi_util_dbg_print(WIFI_WEBCONFIG, "%s:%d sta_count is %d\n", __func__, __LINE__, ap_metrics->sta_cnt);
             encode_sta_link_metrics_object(ap_metrics->sta_link_metrics, ap_metrics->sta_cnt,
                 param_obj);
         }

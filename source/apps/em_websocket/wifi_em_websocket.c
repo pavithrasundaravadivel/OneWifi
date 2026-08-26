@@ -36,7 +36,8 @@
 #define EM_TOPO_GATEWAY_MAC_SIZE   18
 #define EM_TOPO_SSL_KEYLOG_FILE    "/tmp/em_topo_ssl_keys.log"
 #define EM_TOPOLOGY_EVENT_NAME     "Device.WiFi.DataElements.Network.Topology"
-#define EM_WEI_DATA_EVENT_NAME     "Device.WiFi.EM.WEIData"
+#define DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA \
+    "Device.WiFi.DataElements.Network.RcvWeiData"
 #define EM_TOPOLOGY_SUBSCRIBE_RETRY_SEC 1
 
 typedef struct wifi_app wifi_app_t;
@@ -1118,7 +1119,7 @@ static bus_error_t get_wei_data_handler(char *event_name, bus_data_prop_t *p_dat
     (void)user_data;
 
     if (event_name == NULL || p_data == NULL ||
-        strcmp(event_name, EM_WEI_DATA_EVENT_NAME) != 0) {
+        strcmp(event_name, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA) != 0) {
         wifi_util_error_print(WIFI_APPS, "%s:%d: Invalid WEI data event\n", __func__, __LINE__);
         return bus_error_invalid_input;
     }
@@ -1165,11 +1166,12 @@ int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
 
     signal(SIGPIPE, SIG_IGN);
     rc = get_bus_descriptor()->bus_event_subs_fn(
-        &app->handle, EM_WEI_DATA_EVENT_NAME, get_wei_data_handler, NULL, 1000);
+        &app->handle, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA,
+        get_wei_data_handler, NULL, 1000);
     if (rc != bus_error_success) {
         wifi_util_error_print(WIFI_APPS,
             "%s:%d: failed to subscribe to %s, rc:%d\n",
-            __func__, __LINE__, EM_WEI_DATA_EVENT_NAME, rc);
+            __func__, __LINE__, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA, rc);
         get_bus_descriptor()->bus_close_fn(&app->handle);
         return RETURN_ERR;
     }
@@ -1185,7 +1187,7 @@ int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
             __func__, __LINE__, rc);
         g_em_topo_subscribe_tid = 0;
         get_bus_descriptor()->bus_event_unsubs_fn(
-            &app->handle, EM_WEI_DATA_EVENT_NAME);
+            &app->handle, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA);
         g_em_wei_data_subscribed = 0;
         get_bus_descriptor()->bus_close_fn(&app->handle);
         return RETURN_ERR;
@@ -1218,7 +1220,7 @@ int em_websocket_deinit(wifi_app_t *app)
         }
         if (g_em_wei_data_subscribed) {
             get_bus_descriptor()->bus_event_unsubs_fn(
-                &app->handle, EM_WEI_DATA_EVENT_NAME);
+                &app->handle, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA);
             g_em_wei_data_subscribed = 0;
         }
         get_bus_descriptor()->bus_close_fn(&app->handle);

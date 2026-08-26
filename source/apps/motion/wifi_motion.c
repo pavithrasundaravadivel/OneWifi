@@ -1394,8 +1394,8 @@ int hal_event_motion(wifi_app_t *app, wifi_event_subtype_t sub_type, void *data)
         motion_disassoc_device_event(app, data);
         break;
     default:
-        wifi_util_dbg_print(WIFI_APPS, "%s:%d app sub_event:%s not handle\r\n", __func__, __LINE__,
-            wifi_event_subtype_to_string(sub_type));
+        /*wifi_util_dbg_print(WIFI_APPS, "%s:%d app sub_event:%s not handle\r\n", __func__, __LINE__,
+            wifi_event_subtype_to_string(sub_type));*/
         break;
     }
     return RETURN_OK;

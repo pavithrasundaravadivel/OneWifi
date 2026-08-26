@@ -885,8 +885,8 @@ int exec_event_hal_ind(wifi_app_t *apps, wifi_event_subtype_t sub_type, void *ar
             break;
         
         default:
-            wifi_util_dbg_print(WIFI_APPS, "%s:%d: event not handle %s\r\n", __func__, __LINE__,
-            wifi_event_subtype_to_string(sub_type));
+            /*wifi_util_dbg_print(WIFI_APPS, "%s:%d: event not handle %s\r\n", __func__, __LINE__,
+            wifi_event_subtype_to_string(sub_type));*/
             break;
     }
     return RETURN_OK;
