@@ -2036,74 +2036,149 @@ int start_wifi_ctrl(wifi_ctrl_t *ctrl)
 {
     int monitor_ret = 0;
 
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d start_wifi_ctrl: entered\n", __func__, __LINE__);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling init_wifi_monitor\n", __func__, __LINE__);
     monitor_ret = init_wifi_monitor();
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d init_wifi_monitor returned %d\n",
+        __func__, __LINE__, monitor_ret);
 
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling init_wireless_interface_mac\n",
+        __func__, __LINE__);
     init_wireless_interface_mac();
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d init_wireless_interface_mac completed\n",
+        __func__, __LINE__);
 
 #if defined(CONFIG_IEEE80211BE) && !defined(CONFIG_GENERIC_MLO)
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling init_wifi_mld_groups\n", __func__, __LINE__);
     init_wifi_mld_groups();
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d init_wifi_mld_groups completed\n", __func__, __LINE__);
 #endif
 
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling start_wifi_services\n", __func__, __LINE__);
     start_wifi_services();
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d start_wifi_services completed\n", __func__, __LINE__);
 
     ctrl->webconfig_state = ctrl_webconfig_state_vap_all_cfg_rsp_pending;
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Set webconfig state to VAP config response pending\n",
+        __func__, __LINE__);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling telemetry_bootup_time_wifibroadcast\n",
+        __func__, __LINE__);
     telemetry_bootup_time_wifibroadcast(); //Telemetry Marker for btime_wifibcast_split
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d telemetry_bootup_time_wifibroadcast completed\n",
+        __func__, __LINE__);
 
     /* Check for whether Log_Upload was enabled or not
        If Enabled add cron job to do log upload */
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling check_log_upload_cron_job\n", __func__, __LINE__);
     check_log_upload_cron_job();
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d check_log_upload_cron_job completed\n", __func__, __LINE__);
 
     /* start wifi apps */
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling wifi_hal_platform_post_init\n", __func__, __LINE__);
     wifi_hal_platform_post_init();
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d wifi_hal_platform_post_init completed\n",
+        __func__, __LINE__);
 #if defined(CONFIG_IEEE80211BE) && !defined(CONFIG_GENERIC_MLO)
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling update_mlo_rfc_enable\n", __func__, __LINE__);
     update_mlo_rfc_enable(true);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d update_mlo_rfc_enable completed\n", __func__, __LINE__);
 #endif
     if (monitor_ret == 0) {
         //Start Wifi Monitor Thread
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling start_wifi_health_monitor_thread\n",
+            __func__, __LINE__);
         start_wifi_health_monitor_thread();
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d start_wifi_health_monitor_thread completed\n",
+            __func__, __LINE__);
     } else {
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d Skipping health monitor because monitor init failed\n",
+            __func__, __LINE__);
         wifi_util_error_print(WIFI_CTRL,"%s:%d Failed to start Wifi Monitor\n", __func__, __LINE__);
     }
 
 #ifdef ONEWIFI_ANALYTICS_APP_SUPPORT
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Sending analytics start event\n", __func__, __LINE__);
     apps_mgr_analytics_event(&ctrl->apps_mgr, wifi_event_type_exec, wifi_event_exec_start, NULL);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Analytics start event sent\n", __func__, __LINE__);
 #endif
 
 #ifdef ONEWIFI_CAC_APP_SUPPORT
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Sending CAC start event\n", __func__, __LINE__);
     apps_mgr_cac_event(&ctrl->apps_mgr, wifi_event_type_exec, wifi_event_exec_start, NULL, 0);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d CAC start event sent\n", __func__, __LINE__);
 #endif
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Getting RFC parameters\n", __func__, __LINE__);
     wifi_rfc_dml_parameters_t *rfc_param = get_ctrl_rfc_parameters();
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d RFC parameters received, multiap_rfc=%d\n",
+        __func__, __LINE__, rfc_param->multiap_rfc);
 
     if (rfc_param->multiap_rfc) {
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d Sending Multi-AP start event\n", __func__, __LINE__);
         apps_mgr_multiap_event(&ctrl->apps_mgr, wifi_event_type_exec, wifi_event_exec_start, NULL, 0);
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d Multi-AP start event sent\n", __func__, __LINE__);
+    } else {
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d Multi-AP RFC is disabled\n", __func__, __LINE__);
     }
 
     if (ctrl->network_mode == rdk_dev_mode_type_em_node 
      || ctrl->network_mode == rdk_dev_mode_type_em_colocated_node || ctrl->rf_status_down == true) {
         wifi_util_error_print(WIFI_CTRL,"%s:%d WEI RFC is enabled \n", __func__, __LINE__);
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d Sending link quality start event\n",
+            __func__, __LINE__);
         apps_mgr_link_quality_event(&ctrl->apps_mgr, wifi_event_type_exec, wifi_event_exec_start, NULL, 0);
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d Link quality start event sent\n", __func__, __LINE__);
     } else {
         wifi_util_error_print(WIFI_CTRL, "%s:%d WEI RFC is disabled \n", __func__, __LINE__);
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d Sending link quality stop event\n",
+            __func__, __LINE__);
         apps_mgr_link_quality_event(&ctrl->apps_mgr, wifi_event_type_exec, wifi_event_exec_stop, NULL, 0);
+        wifi_util_dbg_print(WIFI_CTRL, "%s:%d Link quality stop event sent\n", __func__, __LINE__);
     }
 
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling ctrl_queue_timeout_scheduler_tasks\n",
+        __func__, __LINE__);
     ctrl_queue_timeout_scheduler_tasks(ctrl);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d ctrl_queue_timeout_scheduler_tasks completed\n",
+        __func__, __LINE__);
     ctrl->webconfig_state = ctrl_webconfig_state_associated_clients_full_cfg_rsp_pending;
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Set webconfig state to associated clients response pending\n",
+        __func__, __LINE__);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling webconfig_send_full_associate_status\n",
+        __func__, __LINE__);
     webconfig_send_full_associate_status(ctrl);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d webconfig_send_full_associate_status completed\n",
+        __func__, __LINE__);
     ctrl->exit_ctrl = false;
     ctrl->ctrl_initialized = true;
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Control state initialized\n", __func__, __LINE__);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling init_ignite_function\n", __func__, __LINE__);
     init_ignite_function();
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d init_ignite_function completed\n", __func__, __LINE__);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Calling register_endpoint_components\n",
+        __func__, __LINE__);
     register_endpoint_components(ctrl);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d register_endpoint_components completed\n",
+        __func__, __LINE__);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Entering ctrl_queue_loop\n", __func__, __LINE__);
     ctrl_queue_loop(ctrl);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d ctrl_queue_loop returned\n", __func__, __LINE__);
 
 #ifdef ONEWIFI_ANALYTICS_APP_SUPPORT
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Sending analytics stop event\n", __func__, __LINE__);
     apps_mgr_analytics_event(&ctrl->apps_mgr, wifi_event_type_exec, wifi_event_exec_stop, NULL);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Analytics stop event sent\n", __func__, __LINE__);
 #endif
 
 #ifdef ONEWIFI_CAC_APP_SUPPORT
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Sending CAC stop event\n", __func__, __LINE__);
     apps_mgr_cac_event(&ctrl->apps_mgr, wifi_event_type_exec, wifi_event_exec_stop, NULL, 0);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d CAC stop event sent\n", __func__, __LINE__);
 #endif
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d start_wifi_ctrl completed, returning success\n",
+        __func__, __LINE__);
     wifi_util_info_print(WIFI_CTRL,"%s:%d Exited queue_wifi_ctrl_task.\n",__FUNCTION__,__LINE__);
+    wifi_util_dbg_print(WIFI_CTRL, "%s:%d Returning RETURN_OK from start_wifi_ctrl\n",
+        __func__, __LINE__);
     return RETURN_OK;
 }
 
