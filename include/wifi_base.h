@@ -1693,6 +1693,19 @@ typedef struct {
 } em_connection_status_event_t;
 
 typedef struct {
+    unsigned long cli_PacketsSent;
+    unsigned long cli_PacketsReceived;
+    unsigned long cli_RetransCount;
+    unsigned long long cli_RxRetries;
+    int cli_SNR;
+    unsigned int   cli_MaxDownlinkRate;
+    unsigned int cli_MaxUplinkRate;
+    unsigned int cli_LastDataDownlinkRate;
+    unsigned int cli_LastDataUplinkRate;
+    bool cli_PowerSaveMode;
+} dev_stats_t;
+
+typedef struct {
     mac_addr_str_t sta_mac;
     mac_addr_str_t ap_mac;
     unsigned int vap_index;
