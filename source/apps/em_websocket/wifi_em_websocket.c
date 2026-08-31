@@ -59,6 +59,8 @@ static volatile int       g_em_topo_ws_ready     = 0;
 static pthread_t          g_em_topo_subscribe_tid = 0;
 static volatile int       g_em_topo_subscribe_stop = 0;
 static volatile int       g_em_topo_subscribed = 0;
+static pthread_t          g_em_wei_data_subscribe_tid = 0;
+static volatile int       g_em_wei_data_subscribe_stop = 0;
 static volatile int       g_em_wei_data_subscribed = 0;
 
 typedef struct {
@@ -790,6 +792,37 @@ static void *em_topo_subscription_thread(void *arg)
     return NULL;
 }
 
+static void *em_wei_data_subscription_thread(void *arg)
+{
+    wifi_app_t *app = (wifi_app_t *)arg;
+    unsigned int subscribe_attempt = 0;
+    bus_error_t rc;
+
+    while (!g_em_wei_data_subscribe_stop) {
+        rc = get_bus_descriptor()->bus_event_subs_fn(
+            &app->handle, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA, get_wei_data_handler, NULL, 1000);
+        if (rc == bus_error_success) {
+            g_em_wei_data_subscribed = 1;
+            wifi_util_info_print(WIFI_APPS,
+                "%s:%d: RBUS model registered; WEI data subscription succeeded\n",
+                __func__, __LINE__);
+            return NULL;
+        }
+
+        subscribe_attempt++;
+        if (subscribe_attempt == 1 ||
+            (subscribe_attempt % 10) == 0) {
+            wifi_util_error_print(WIFI_APPS,
+                "%s:%d waiting for RBUS model %s (attempt:%u rc:%d)\n",
+                __func__, __LINE__, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA,
+                subscribe_attempt, rc);
+        }
+        sleep(EM_TOPOLOGY_SUBSCRIBE_RETRY_SEC);
+    }
+
+    return NULL;
+}
+
 /* --- Entry point: called from the Network Topology event handler --- */
 static void em_topo_stream_send_topology(const char *topology_json)
 {
@@ -1164,16 +1197,19 @@ int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
     }
 
     signal(SIGPIPE, SIG_IGN);
-    rc = get_bus_descriptor()->bus_event_subs_fn(
-        &app->handle, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA, get_wei_data_handler, NULL, 1000);
-    if (rc != bus_error_success) {
+    
+    g_em_wei_data_subscribe_stop = 0;
+    g_em_wei_data_subscribed = 0;
+    rc = pthread_create(&g_em_wei_data_subscribe_tid, NULL,
+        em_wei_data_subscription_thread, app);
+    if (rc != 0) {
         wifi_util_error_print(WIFI_APPS,
-            "%s:%d: failed to subscribe to %s, rc:%d\n",
-            __func__, __LINE__, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA, rc);
+            "%s:%d: failed to create WEI data subscription thread, rc:%d\n",
+            __func__, __LINE__, rc);
+        g_em_wei_data_subscribe_tid = 0;
         get_bus_descriptor()->bus_close_fn(&app->handle);
         return RETURN_ERR;
     }
-    g_em_wei_data_subscribed = 1;
 
     g_em_topo_subscribe_stop = 0;
     g_em_topo_subscribed = 0;
@@ -1184,9 +1220,11 @@ int em_websocket_init(wifi_app_t *app, unsigned int create_flag)
             "%s:%d: failed to create RBUS subscription thread, rc:%d\n",
             __func__, __LINE__, rc);
         g_em_topo_subscribe_tid = 0;
-        get_bus_descriptor()->bus_event_unsubs_fn(
-            &app->handle, DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA);
-        g_em_wei_data_subscribed = 0;
+        g_em_wei_data_subscribe_stop = 1;
+        if (g_em_wei_data_subscribe_tid != 0) {
+            pthread_join(g_em_wei_data_subscribe_tid, NULL);
+            g_em_wei_data_subscribe_tid = 0;
+        }
         get_bus_descriptor()->bus_close_fn(&app->handle);
         return RETURN_ERR;
     }
@@ -1205,12 +1243,21 @@ int em_websocket_deinit(wifi_app_t *app)
 {
     if (app != NULL) {
         g_em_topo_subscribe_stop = 1;
+        g_em_wei_data_subscribe_stop = 1;
+        
         if (g_em_topo_subscribe_tid != 0) {
             pthread_join(g_em_topo_subscribe_tid, NULL);
             g_em_topo_subscribe_tid = 0;
         }
+        
+        if (g_em_wei_data_subscribe_tid != 0) {
+            pthread_join(g_em_wei_data_subscribe_tid, NULL);
+            g_em_wei_data_subscribe_tid = 0;
+        }
+        
         em_topo_stop_ping_listener();
         em_topo_close();
+        
         if (g_em_topo_subscribed) {
             get_bus_descriptor()->bus_event_unsubs_fn(
                 &app->handle, EM_TOPOLOGY_EVENT_NAME);
