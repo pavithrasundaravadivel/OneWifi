@@ -17,7 +17,7 @@
   limitations under the License.
  **************************************************************************/
 
-#include "const.h"
+//#include "const.h"
 #include "scheduler.h"
 #include "wifi_em_utils.h"
 #include "wifi_em.h"
@@ -200,12 +200,12 @@ static int em_get_vap_index_from_bssid(mac_addr_t bssid)
 
     to_mac_str(bssid, search_str);
 
-    for (int i = 0; i < num_of_radios; i++) {
+    for (unsigned int i = 0; i < num_of_radios; i++) {
         vap_map = (wifi_vap_info_map_t *)get_wifidb_vap_map(i);
         if (vap_map == NULL) {
             continue;
         }
-        for (int j = 0; j < vap_map->num_vaps; j++) {
+        for (unsigned int j = 0; j < vap_map->num_vaps; j++) {
             if (isVapSTAMesh(vap_map->vap_array[j].vap_index)) {
                 continue;
             }
@@ -3342,16 +3342,6 @@ static int em_process_beacon_rep(mac_address_t sta_mac, wifi_hal_rrm_report_t *r
     report.dialog_token = rep->dialog_token;
     report.num_br_data = rep->size;
 
-    wifi_ctrl_t *ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
-    wifi_apps_mgr_t *apps_mgr;
-
-    apps_mgr = &ctrl->apps_mgr;
-    if (apps_mgr == NULL) {
-        wifi_util_dbg_print(WIFI_EM, "%s:%d NULL Pointer \n", __func__, __LINE__);
-        free(data);
-        return;
-    }
-
     size_t min_len = IEEE80211_HDRLEN + 1 + sizeof(mgmt->u.action.u.rrm);
     if (len <= min_len) {
         wifi_util_error_print(WIFI_EM, "%s:%d short beacon report frame len=%zu (min=%zu)\n",
@@ -4173,7 +4163,7 @@ static int em_send_action_frame(void *data)
             continue;
         }
 
-        for (int j = 0; j < vap_map->num_vaps; j++) {
+        for (unsigned int j = 0; j < vap_map->num_vaps; j++) {
             if (memcmp(params->bssid, vap_map->vap_array[j].u.bss_info.bssid, sizeof(mac_addr_t)) ==
                 0) {
                 ap_index = vap_map->vap_array[j].vap_index;
@@ -4481,7 +4471,7 @@ int em_deinit(wifi_app_t *app)
 {
     void *tmp_data = NULL;
     mac_addr_str_t mac_str;
-    //wifi_ctrl_t *ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
+    wifi_ctrl_t *ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
 
     wifi_util_info_print(WIFI_EM, "%s:%d: em-app deinit\n", __func__, __LINE__);
 
