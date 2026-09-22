@@ -3256,7 +3256,7 @@ typedef enum {
     dm_orch_type_link_quality_report,
     dm_orch_type_unassoc_sta_link_req_query,
     dm_orch_type_unassoc_sta_result,
-    dm_orch_type_client_assoc
+    dm_orch_type_client_assoc,
 
     dm_orch_type_wei_data,
     

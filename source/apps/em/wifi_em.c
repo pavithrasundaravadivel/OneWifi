@@ -17,7 +17,7 @@
   limitations under the License.
  **************************************************************************/
 
-#include "const.h"
+//#include "const.h"
 #include "scheduler.h"
 #include "wifi_em_utils.h"
 #include "wifi_em.h"
@@ -200,12 +200,12 @@ static int em_get_vap_index_from_bssid(mac_addr_t bssid)
 
     to_mac_str(bssid, search_str);
 
-    for (int i = 0; i < num_of_radios; i++) {
+    for (unsigned int i = 0; i < num_of_radios; i++) {
         vap_map = (wifi_vap_info_map_t *)get_wifidb_vap_map(i);
         if (vap_map == NULL) {
             continue;
         }
-        for (int j = 0; j < vap_map->num_vaps; j++) {
+        for (unsigned int j = 0; j < vap_map->num_vaps; j++) {
             if (isVapSTAMesh(vap_map->vap_array[j].vap_index)) {
                 continue;
             }
@@ -3867,7 +3867,7 @@ static bus_error_t parse_client_assoc_ctrl_json(const char *json_str, bssid_t *b
     return bus_error_success;
 }
 
-static bus_error_t cacr_set_client_acl_rules(char *event_name, raw_data_t *p_data, void *userData)
+static bus_error_t cacr_set_client_acl_rules(char *event_name, raw_data_t *p_data, bus_user_data_t *userData)
 {
     wifi_util_dbg_print(WIFI_CTRL, "%s:%d Received Client Assoc Ctrl Event from Agent\n", __func__, __LINE__);
 
@@ -4171,7 +4171,7 @@ static int em_send_action_frame(void *data)
             continue;
         }
 
-        for (int j = 0; j < vap_map->num_vaps; j++) {
+        for (unsigned int j = 0; j < vap_map->num_vaps; j++) {
             if (memcmp(params->bssid, vap_map->vap_array[j].u.bss_info.bssid, sizeof(mac_addr_t)) ==
                 0) {
                 ap_index = vap_map->vap_array[j].vap_index;
@@ -4479,7 +4479,7 @@ int em_deinit(wifi_app_t *app)
 {
     void *tmp_data = NULL;
     mac_addr_str_t mac_str;
-    //wifi_ctrl_t *ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
+    wifi_ctrl_t *ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
 
     wifi_util_info_print(WIFI_APPS, "%s:%d: em-app deinit\n", __func__, __LINE__);
 
