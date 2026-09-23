@@ -36,7 +36,7 @@
 #define EM_TOPO_GATEWAY_MAC_SIZE   18
 #define EM_TOPO_SSL_KEYLOG_FILE    "/tmp/em_topo_ssl_keys.log"
 #define EM_TOPOLOGY_EVENT_NAME     "Device.WiFi.DataElements.Network.Topology"
-#define DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA  "Device.WiFi.DataElements.Network.RcvWeiData"
+#define DEVICE_WIFI_DATAELEMENTS_RCV_WEI_DATA  "Device.X_RDKCENTRAL-COM_WEI.EMPublish"
 #define EM_TOPOLOGY_SUBSCRIBE_RETRY_SEC 1
 
 typedef struct wifi_app wifi_app_t;
