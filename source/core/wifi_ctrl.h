@@ -119,7 +119,6 @@ extern "C" {
 #define BUS_WFA_DML_CONFIG_FILE "Data_Elements_JSON_Schema_v3.0.json"
 
 #define CTRL_QUEUE_SIZE_MAX (700 * getNumberRadios())
-#define WEI_RFC_MASK        "Device.X_RDKCENTRAL-COM_WEI.RFC_MASK"
 
 extern bool is_sta_set;
 
@@ -264,7 +263,6 @@ typedef struct wifi_ctrl {
     bool                wifi_sta_5g_status_subscribed;
     bool                eth_bh_status_subscribed;
     bool                mesh_keep_out_chans_subscribed;
-    bool                wei_events_subscribed;
     wifiapi_t           wifiapi;
     wifi_rfc_dml_parameters_t    rfc_params;
     unsigned int        sta_tree_instance_num;
@@ -337,15 +335,6 @@ typedef struct {
     bool enabled;
 } public_vaps_data_t;
 
-typedef enum
-{
-    WEI_RFC_NONE  = 0x00,  /* Main WEI RFC disabled                  */
-    WEI_RFC_MAIN  = 0x01,  /* Main WEI RFC enabled                   */
-    WEI_RFC_LQ    = 0x02,  /* Link Quality pillar enabled            */
-    WEI_RFC_GC    = 0x04,  /* Getting Connected pillar enabled       */
-    WEI_RFC_SC    = 0x08,  /* Staying Connected pillar enabled       */
-    WEI_RFC_ALL   = (WEI_RFC_MAIN | WEI_RFC_LQ | WEI_RFC_GC | WEI_RFC_SC)
-} wei_rfc_mask_t;
 void process_mgmt_ctrl_frame_event(frame_data_t *msg, uint32_t msg_length);
 wifi_db_t *get_wifidb_obj();
 wifi_ctrl_t *get_wifictrl_obj();
