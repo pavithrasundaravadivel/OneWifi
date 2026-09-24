@@ -799,9 +799,9 @@ static int wei_assoc_client_data_response(wifi_app_t *app, wifi_provider_respons
         wei_data_t wei_data = {0};
         sta_data_t *sta_data = &sta_assoc_stats[count];
 
-        wifi_util_dbg_print(WIFI_EM, "%s:%d: sta_data's cli assoc status for a mlo client: 0x%x\n", __func__, __LINE__, sta_data->assoc_link);
+        wifi_util_dbg_print(WIFI_EM, "%s:%d: sta_data's cli assoc status for a mlo client: 0x%x cli_Active %d\n", __func__, __LINE__, sta_data->assoc_link, sta_data->dev_stats.cli_Active);
 
-        if (sta_data->assoc_link == 0) {
+        if (sta_data->dev_stats.cli_Active == false) {
             wifi_util_dbg_print(WIFI_EM, "%s:%d: STA is not associated\n", __func__, __LINE__);
             continue;
         }
