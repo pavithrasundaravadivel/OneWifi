@@ -548,6 +548,7 @@ typedef struct {
     unsigned int cli_LastDataDownlinkRate;
     unsigned int cli_LastDataUplinkRate;
     unsigned long cli_sleepTime;
+    bool cli_PowerSaveMode;
 } dev_stats_t;
 
 typedef struct {
@@ -1689,8 +1690,8 @@ typedef struct {
 } em_connection_status_event_t;
 
 typedef struct {
-    mac_addr_str_t sta_mac;
-    mac_addr_str_t ap_mac;
+    mac_addr_str_t mac_str;
+    mac_addr_str_t ap_mac_str;
     unsigned int vap_index;
     unsigned int radio_index;
     int channel_utilization;
