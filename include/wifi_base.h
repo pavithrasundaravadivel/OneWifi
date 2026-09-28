@@ -1689,9 +1689,6 @@ typedef struct {
 typedef struct {
     mac_addr_str_t mac_str;
     mac_addr_str_t ap_mac_str;
-    //TODO
-    mac_addr_str_t sta_mac;
-    mac_addr_str_t ap_mac;
     unsigned int vap_index;
     unsigned int radio_index;
     int channel_utilization;
