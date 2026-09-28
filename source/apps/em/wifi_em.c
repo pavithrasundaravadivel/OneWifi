@@ -825,9 +825,9 @@ static int wei_assoc_client_data_response(wifi_app_t *app, wifi_provider_respons
 
         mac_addr_str_t mac_str;
         to_mac_str(sta_data->sta_mac, mac_str);
-        memcpy(wei_data.sta_mac, mac_str, sizeof(mac_addr_str_t));
+        memcpy(wei_data.mac_str, mac_str, sizeof(mac_addr_str_t));
         // to_mac_str(sta_data->bssid, mac_str);
-        // memcpy(wei_data.ap_mac, mac_str, sizeof(mac_addr_str_t));
+        // memcpy(wei_data.ap_mac_str, mac_str, sizeof(mac_addr_str_t));
         wei_data.vap_index = vap_array_index;
         wei_data.radio_index = radio_index;
         wei_data.channel_utilization = channel_utilization;
@@ -865,8 +865,8 @@ static int wei_assoc_client_data_response(wifi_app_t *app, wifi_provider_respons
                 wifi_util_info_print(WIFI_EM, 
                     "[WEI_DATA] SUCCESS: Published metrics to agent on [%s] | STA: %02x:%02x:%02x:%02x:%02x:%02x | Radio: %d | VAP: %d | ChUtil: %d%%\n",
                     WIFI_EM_WEI_DATA,
-                    wei_data.sta_mac[0], wei_data.sta_mac[1], wei_data.sta_mac[2],
-                    wei_data.sta_mac[3], wei_data.sta_mac[4], wei_data.sta_mac[5],
+                    wei_data.mac_str[0], wei_data.mac_str[1], wei_data.mac_str[2],
+                    wei_data.mac_str[3], wei_data.mac_str[4], wei_data.mac_str[5],
                     wei_data.radio_index, wei_data.vap_index, wei_data.channel_utilization);
             } else {
                 // Log explicit publish failure return code from RBus
