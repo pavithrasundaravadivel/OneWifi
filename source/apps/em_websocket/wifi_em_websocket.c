@@ -823,8 +823,8 @@ static void *em_wei_data_subscription_thread(void *arg)
     return NULL;
 }
 
-/* --- Entry point: called from the Network Topology event handler --- */
-static void em_topo_stream_send_topology(const char *topology_json)
+/* --- Entry point: called from the Network Topology and WEI data event handlers --- */
+static void em_topo_stream_send_topology(const char *topology_json, const char *app_type)
 {
     char *envelope_str = NULL;
     char id_buf[32] = {0};
@@ -854,7 +854,7 @@ static void em_topo_stream_send_topology(const char *topology_json)
 
     cJSON_AddStringToObject(envelope, "cm_mac", g_em_topo_gateway_mac);
     cJSON_AddStringToObject(envelope, "ordering_id", id_buf);
-    cJSON_AddStringToObject(envelope, "app_type", "easyMesh");
+    cJSON_AddStringToObject(envelope, "app_type", app_type);
     cJSON_AddStringToObject(envelope, "timestamp", ts_buf);
     {
         cJSON *payload_obj = cJSON_Parse(topology_json);
@@ -876,6 +876,8 @@ static void em_topo_stream_send_topology(const char *topology_json)
     wifi_util_dbg_print(WIFI_APPS,
         "[TOPO-WS] Sending topology #%llu ts=%s mac=%s",
         g_em_topo_order_id, ts_buf, g_em_topo_gateway_mac);
+    wifi_util_dbg_print(WIFI_APPS,
+        "[TOPO-WS] Payload: %s", envelope_str);
 
     for (int send_attempt = 0; send_attempt < 5; send_attempt++) {
         if (g_em_topo_socket_fd < 0 || !g_em_topo_ws_ready) {
@@ -1137,7 +1139,7 @@ static bus_error_t get_topology_handler(char *event_name, bus_data_prop_t *p_dat
     raw_data[raw_data_len] = '\0';
     wifi_util_info_print(WIFI_APPS, "%s:%d: Received topology event, payload is %s\n", __func__, __LINE__, raw_data);
 
-    em_topo_stream_send_topology(raw_data);
+    em_topo_stream_send_topology(raw_data, "easyMesh");
     free(raw_data);
     return bus_error_success;
 }
@@ -1178,7 +1180,7 @@ static bus_error_t get_wei_data_handler(char *event_name, bus_data_prop_t *p_dat
         return bus_error_general;
     }
 
-    em_topo_stream_send_topology(json_str);
+    em_topo_stream_send_topology(json_str, "weiTelemetry");
     free(json_str);
     return bus_error_success;
 }
