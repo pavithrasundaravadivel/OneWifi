@@ -1689,7 +1689,7 @@ typedef struct {
     bool reason_code_present;
 } em_connection_status_event_t;
 
-typedef struct {
+/*typedef struct {
     mac_addr_str_t mac_str;
     mac_addr_str_t ap_mac_str;
     unsigned int vap_index;
@@ -1706,7 +1706,7 @@ typedef struct {
     char dhcp_vendor_class[256];
     char dhcp_param_list[512];
 } wei_data_t;
-
+*/
 //#endif // EM_APP
 
 #ifdef __cplusplus

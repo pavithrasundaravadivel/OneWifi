@@ -796,7 +796,7 @@ static int wei_assoc_client_data_response(wifi_app_t *app, wifi_provider_respons
     }
 
     for (unsigned int count = 0; count < provider_response->stat_array_size; count++) {
-        wei_data_t wei_data = {0};
+        stats_arg_t wei_data = {0};
         sta_data_t *sta_data = &sta_assoc_stats[count];
 
         wifi_util_dbg_print(WIFI_EM, "%s:%d: sta_data's cli assoc status for a mlo client: 0x%x cli_Active %d\n", __func__, __LINE__, sta_data->assoc_link, sta_data->dev_stats.cli_Active);
@@ -848,7 +848,7 @@ static int wei_assoc_client_data_response(wifi_app_t *app, wifi_provider_respons
         wifi_util_dbg_print(WIFI_EM, "total_connected_time: %llds\n", (long long)wei_data.total_connected_time.tv_sec);
         wifi_util_dbg_print(WIFI_EM, "total_disconnected_time: %llds\n", (long long)wei_data.total_disconnected_time.tv_sec);
 
-        // Publish the whole wei_data_t
+        // Publish the whole stats_arg_t
         wifi_ctrl_t *wifi_ctrl = get_wifictrl_obj();
         wifi_bus_desc_t *bus_desc = get_bus_descriptor();
 
@@ -856,7 +856,7 @@ static int wei_assoc_client_data_response(wifi_app_t *app, wifi_provider_respons
             raw_data_t rdata = {0};
             rdata.data_type = bus_data_type_bytes;
             rdata.raw_data.bytes = (uint8_t *)&wei_data;
-            rdata.raw_data_len = sizeof(wei_data_t);
+            rdata.raw_data_len = sizeof(stats_arg_t);
 
             bus_error_t pub_ret = bus_desc->bus_event_publish_fn(&wifi_ctrl->handle, WIFI_EM_WEI_DATA, &rdata);
 
