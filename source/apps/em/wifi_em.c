@@ -438,10 +438,14 @@ static int prepare_sta_lins_metrics_data(per_sta_metrics_t *data, wifi_associate
 
     // Associated STA Link Metrics
     memcpy(data->sta_mac, stats->associated_dev3.cli_MACAddress, sizeof(mac_address_t));
+    wifi_util_dbg_print(WIFI_EM, "%s:%d sta_mac is %02x:%02x:%02x:%02x:%02x:%02x\n", __func__, __LINE__,
+        data->sta_mac[0], data->sta_mac[1], data->sta_mac[2], data->sta_mac[3], data->sta_mac[4], data->sta_mac[5]);
     // Retrive client type info
     to_mac_str(stats->associated_dev3.cli_MACAddress, key);
+    wifi_util_dbg_print(WIFI_EM, "%s:%d Entering for key as %s\n", __func__, __LINE__, key);
     cli_data = hash_map_get(client_type_info.sta_client_type.client_type_map, key);
     if (cli_data != NULL) {
+        wifi_util_dbg_print(WIFI_EM, "%s:%d Entering %s\n", __func__, __LINE__, cli_data->client_type);
         strncpy((char *)data->client_type, (const char *)cli_data->client_type, sizeof(data->client_type) - 1);
         data->client_type[sizeof(data->client_type) - 1] = '\0';
     }
@@ -740,7 +744,7 @@ int em_assoc_client_response(wifi_app_t *app, wifi_provider_response_t *provider
 
     return RETURN_OK;
 }
-
+#if 0
 static int wei_assoc_client_data_response(wifi_app_t *app, wifi_provider_response_t *provider_response)
 {
     // Implementation of the function goes here
@@ -848,37 +852,13 @@ static int wei_assoc_client_data_response(wifi_app_t *app, wifi_provider_respons
         wifi_util_dbg_print(WIFI_EM, "total_connected_time: %llds\n", (long long)wei_data.total_connected_time.tv_sec);
         wifi_util_dbg_print(WIFI_EM, "total_disconnected_time: %llds\n", (long long)wei_data.total_disconnected_time.tv_sec);
 
-        // Publish the whole stats_arg_t
-        wifi_ctrl_t *wifi_ctrl = get_wifictrl_obj();
-        wifi_bus_desc_t *bus_desc = get_bus_descriptor();
-
-        if (wifi_ctrl && bus_desc && bus_desc->bus_event_publish_fn) {
-            raw_data_t rdata = {0};
-            rdata.data_type = bus_data_type_bytes;
-            rdata.raw_data.bytes = (uint8_t *)&wei_data;
-            rdata.raw_data_len = sizeof(stats_arg_t);
-
-            bus_error_t pub_ret = bus_desc->bus_event_publish_fn(&wifi_ctrl->handle, WIFI_EM_WEI_DATA, &rdata);
-
-            if (pub_ret == bus_error_success) {
-                // Log successful publication with STA MAC, Radio, and VAP context
-                wifi_util_info_print(WIFI_EM, 
-                    "[WEI_DATA] SUCCESS: Published metrics to agent on [%s] | STA: %02x:%02x:%02x:%02x:%02x:%02x | Radio: %d | VAP: %d | ChUtil: %d%%\n",
-                    WIFI_EM_WEI_DATA,
-                    wei_data.mac_str[0], wei_data.mac_str[1], wei_data.mac_str[2],
-                    wei_data.mac_str[3], wei_data.mac_str[4], wei_data.mac_str[5],
-                    wei_data.radio_index, wei_data.vap_index, wei_data.channel_utilization);
-            } else {
-                // Log explicit publish failure return code from RBus
-                wifi_util_error_print(WIFI_EM, 
-                    "[WEI_DATA] ERROR: bus_event_publish_fn failed on [%s] with status code: %d\n",
-                    WIFI_EM_WEI_DATA, pub_ret);
-            }
-        } else {
-            wifi_util_error_print(WIFI_EM, 
-                "[WEI_DATA] ERROR: Publish skipped! ctrl: %p, bus_desc: %p\n",
-                wifi_ctrl, bus_desc);
-        }
+        // NOTE: The "Device.WiFi.EM.WEIData" bus publish that used to happen here has
+        // been removed. em_agent now listens directly on the LQ stats UNIX domain
+        // socket (LQ_STATS_SOCKET_PATH) that the WEI library (wifi_linkquality_libs.c /
+        // lq_ipc_sender.c) already sends periodic/caffinity stats to, so this duplicate
+        // bus-based path is no longer needed. See
+        // unified-wifi-mesh/custom/src/agent/lq_agent_listener.cpp.
+        (void)wei_data;
     }
     
     //remove
@@ -886,7 +866,7 @@ static int wei_assoc_client_data_response(wifi_app_t *app, wifi_provider_respons
 
     return RETURN_OK;
 }
-
+#endif
 static void config_em_neighbour_scan(wifi_monitor_data_t *data, unsigned int radioIndex)
 {
     wifi_event_route_t route;
@@ -1696,9 +1676,9 @@ int em_handle_monitor_provider_response(wifi_app_t *app, wifi_event_t *event)
     case em_app_event_type_vap_stats_periodic:
         ret = vap_stats_response(provider_response);
         break;
-    case em_app_event_type_wei_data:
-        ret = wei_assoc_client_data_response(app, provider_response);
-        break;
+    // case em_app_event_type_wei_data:
+    //     ret = wei_assoc_client_data_response(app, provider_response);
+    //     break;
     default:
         wifi_util_error_print(WIFI_EM, "%s:%d: event not handle[%d]\r\n", __func__, __LINE__,
             provider_response->args.app_info);
@@ -1912,7 +1892,7 @@ static int em_handle_sta_conn_status(wifi_app_t *app, void *data)
 {
     rdk_sta_data_t *sta_data = (rdk_sta_data_t *)data;
     if (sta_data == NULL) {
-        wifi_util_error_print(WIFI_APPS, "%s:%d: NULL STA data!\n", __func__, __LINE__);
+        wifi_util_error_print(WIFI_EM, "%s:%d: NULL STA data!\n", __func__, __LINE__);
         return RETURN_ERR;
     }
 
@@ -1921,7 +1901,7 @@ static int em_handle_sta_conn_status(wifi_app_t *app, void *data)
     raw_data_t rdata = {0};
     rdata.raw_data.bytes = malloc(sizeof(rdk_sta_data_t));
     if (rdata.raw_data.bytes == NULL) {
-        wifi_util_error_print(WIFI_APPS, "%s:%d: Could not allocate for rdk_sta_data_t\n", __func__, __LINE__);
+        wifi_util_error_print(WIFI_EM, "%s:%d: Could not allocate for rdk_sta_data_t\n", __func__, __LINE__);
         return RETURN_ERR;
     }
     rdata.data_type = bus_data_type_bytes;
@@ -2271,7 +2251,9 @@ static int ap_report_push_cb(em_ap_report_callback_arg_t *args)
 
                 stats = hash_map_get_first(
                     em_ap_metrics_report_cache.radio_report[radio_index].ap_data[cache_vap_index].client_stats_map);
+                wifi_util_dbg_print(WIFI_EM, "%s:%d Entering cnt is %d and vap_report->sta_cnt is %d\n", __func__, __LINE__, cnt, vap_report->sta_cnt);
                 while ((stats != NULL) && (cnt < vap_report->sta_cnt)) {
+                    wifi_util_dbg_print(WIFI_EM, "%s:%d Entering\n", __func__, __LINE__);
                     prepare_sta_traffic_stats_data(&vap_report->sta_traffic_stats[cnt], stats);
                     prepare_sta_lins_metrics_data(&vap_report->sta_link_metrics[cnt], stats,
                         vap_info->vap_index);
@@ -2279,8 +2261,10 @@ static int ap_report_push_cb(em_ap_report_callback_arg_t *args)
                         em_ap_metrics_report_cache.radio_report[radio_index].ap_data[cache_vap_index].client_stats_map, stats);
                     cnt++;
                 }
+                wifi_util_dbg_print(WIFI_EM, "%s:%d count is %d\n", __func__, __LINE__, cnt);
                 vap_report->sta_cnt = cnt;
                 vap_report->vap_metrics.num_of_assoc_stas = cnt;
+                wifi_util_dbg_print(WIFI_EM, "%s:%d sta_cnt is %d and assoc_stas is %d\n", __func__, __LINE__, vap_report->sta_cnt, vap_report->vap_metrics.num_of_assoc_stas);
                 break;
 
             default:
@@ -3153,7 +3137,7 @@ static int em_toggle_disconn_steady_state(void *data, unsigned int len)
     return bus_error_success;
 }
 
-
+#if 0
 void config_data_for_wei(wifi_app_t *app)
 {
     wifi_monitor_data_t *data = NULL;
@@ -3211,14 +3195,14 @@ void config_data_for_wei(wifi_app_t *app)
 wifi_util_info_print(WIFI_EM, "push_event_to_monitor_queue returned: %d\n", ret);
     //if policy config is disabled then collection should continue regardless as same buffer is used
 }
-
+#endif
 void handle_em_command_event(wifi_app_t *app, wifi_event_t *event)
 {
     switch (event->sub_type) {
     case wifi_event_type_notify_monitor_done:
         is_monitor_done = TRUE;
         {
-            config_data_for_wei(app);
+            // config_data_for_wei(app);
             wifi_util_info_print(WIFI_EM, "%s:%d: monitor done, is_monitor_done=%d\n", __func__, __LINE__, is_monitor_done);
             wifi_mgr_t *wifi_mgr = get_wifimgr_obj();
             unsigned int num_radios = getNumberRadios();
@@ -4403,9 +4387,6 @@ int em_init(wifi_app_t *app, unsigned int create_flag)
         { WIFI_EM_FAILED_CONNECTION, bus_element_type_event,
             { NULL, NULL, NULL, NULL, NULL, NULL }, slow_speed, ZERO_TABLE,
             { bus_data_type_string, false, 0, 0, 0, NULL } },
-        { WIFI_EM_WEI_DATA,          bus_element_type_event,
-            { NULL, NULL, NULL, NULL, NULL, NULL }, slow_speed, ZERO_TABLE,
-            { bus_data_type_bytes, false, 0, 0, 0, NULL } },
     };
 
     policy_config->btm_steering_dslw_policy.sta_count = 0;

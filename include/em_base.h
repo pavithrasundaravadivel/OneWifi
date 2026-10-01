@@ -1777,14 +1777,8 @@ typedef struct {
 
 typedef struct {
     unsigned char  vendor_oui[3];
-    unsigned char num;
-    em_vendor_data_t  data[0];
-} __attribute__((__packed__)) em_vendor_specific_t;
-
-typedef struct {
-    unsigned char  vendor_oui[3];
     unsigned char  data[0];
-} __attribute__((__packed__)) em_vendor_specific_v_t;
+} __attribute__((__packed__)) em_vendor_specific_t;
 
 typedef struct {
     mac_address_t interface_mac;
