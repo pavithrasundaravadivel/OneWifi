@@ -268,6 +268,15 @@ int vap_svc_start_stop(vap_svc_t *svc, unsigned int radio_index, bool enable)
                 if(tgt_vap_map->vap_array[tgt_vap_map->num_vaps].u.bss_info.enabled) {
                     tgt_vap_map->vap_array[tgt_vap_map->num_vaps].u.bss_info.enabled = enable;
                 }
+#if defined(_WNXL11BWL_PRODUCT_REQ_)
+                if (tgt_rdk_vaps[tgt_vap_map->num_vaps].exists == false &&
+                    isVapPrivate(vap_map->vap_array[j].vap_index)) {
+                    wifi_util_info_print(WIFI_CTRL,
+                        "%s:%d VAP_EXISTS_FALSE for private vap_index=%d, treating as present\n",
+                        __func__, __LINE__, vap_map->vap_array[j].vap_index);
+                    tgt_rdk_vaps[tgt_vap_map->num_vaps].exists = true;
+                }
+#endif
                 wifi_util_info_print(WIFI_CTRL,
                     "%s:%d Vap name is %s and enabled value = %d and rdk_exists = %d\n",
                     __FUNCTION__, __LINE__, tgt_vap_map->vap_array[tgt_vap_map->num_vaps].vap_name,
