@@ -2417,6 +2417,8 @@ bool ssid_set_param_bool_value(void *obj_ins_context, char *param_name, bool out
             }
 
             p_dm_vap_info->u.bss_info.enabled = output_value;
+            wifi_util_info_print(WIFI_DMCLI, "BSS_EN_TRACE %s:%d dml vap=%s enabled=%d\n", __func__,
+                __LINE__, pcfg->vap_name, output_value);
             set_dml_cache_vap_config_changed(instance_number - 1);
         } else {
             wifi_util_dbg_print(WIFI_DMCLI,

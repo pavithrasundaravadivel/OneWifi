@@ -5843,6 +5843,8 @@ SSID_SetParamBoolValue
         if (bValue == true) {
             rdk_vap_info->exists = bValue;
         }
+        wifi_util_info_print(WIFI_DMCLI, "BSS_EN_TRACE %s:%d dml vap=%s enabled=%d\n", __func__,
+            __LINE__, pcfg->vap_name, bValue);
 
 #if !defined(_WNXL11BWL_PRODUCT_REQ_) && !defined(_PP203X_PRODUCT_REQ_) && !defined(_GREXT02ACTS_PRODUCT_REQ_)
         if (bValue == false) {

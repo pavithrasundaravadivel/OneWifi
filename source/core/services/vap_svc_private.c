@@ -116,6 +116,9 @@ int vap_svc_private_update(vap_svc_t *svc, unsigned int radio_index, wifi_vap_in
         if (rdk_vap_info[i].exists == false && isVapPrivate(map->vap_array[i].vap_index)) {
             wifi_util_error_print(WIFI_CTRL,"%s:%d VAP_EXISTS_FALSE for vap_index=%d, setting to TRUE \n",__FUNCTION__,__LINE__,map->vap_array[i].vap_index);
             rdk_vap_info[i].exists = true;
+            // A record still marked absent was created by the old XLE default (disabled), never by the user
+            p_tgt_vap_map->vap_array[0].u.bss_info.enabled = true;
+            enabled = true;
         }
 #elif !defined(_PP203X_PRODUCT_REQ_) && !defined(_GREXT02ACTS_PRODUCT_REQ_)
         if(rdk_vap_info[i].exists == false) {
@@ -130,7 +133,12 @@ int vap_svc_private_update(vap_svc_t *svc, unsigned int radio_index, wifi_vap_in
 #endif /* _SR213_PRODUCT_REQ_ */
         }
 #endif /* !defined(_PP203X_PRODUCT_REQ_) && !defined(_GREXT02ACTS_PRODUCT_REQ_) */
+        wifi_util_info_print(WIFI_CTRL, "BSS_EN_TRACE %s:%d vap_index=%d db_enabled=%d exists=%d\n",
+            __func__, __LINE__, map->vap_array[i].vap_index, enabled, rdk_vap_info[i].exists);
         p_tgt_vap_map->vap_array[0].u.bss_info.enabled &= rdk_vap_info[i].exists;
+        wifi_util_info_print(WIFI_CTRL, "BSS_EN_TRACE %s:%d vap_index=%d enabled_to_hal=%d\n",
+            __func__, __LINE__, map->vap_array[i].vap_index,
+            p_tgt_vap_map->vap_array[0].u.bss_info.enabled);
 
         ret = wifi_hal_createVAP(radio_index, p_tgt_vap_map);
         if (ret != RETURN_OK) {

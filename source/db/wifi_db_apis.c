@@ -6911,6 +6911,8 @@ int wifidb_get_wifi_vap_info(char *vap_name, wifi_vap_info_t *config,
                 strncpy(config->u.bss_info.ssid,pcfg->ssid,(sizeof(config->u.bss_info.ssid)-1));
             }
             config->u.bss_info.enabled = pcfg->enabled;
+            wifi_util_info_print(WIFI_DB, "BSS_EN_TRACE %s:%d loaded from db vap_index=%d enabled=%d exists=%d\n",
+                __func__, __LINE__, vap_index, pcfg->enabled, pcfg->exists);
             config->u.bss_info.showSsid = pcfg->ssid_advertisement_enabled;
             config->u.bss_info.isolation = pcfg->isolation_enabled;
             config->u.bss_info.mgmtPowerControl = pcfg->mgmt_power_control;
@@ -8245,8 +8247,15 @@ int wifidb_init_vap_config_default(int vap_index, wifi_vap_info_t *config,
         }
 #if defined(_WNXL11BWL_PRODUCT_REQ_) || defined(_PP203X_PRODUCT_REQ_) || defined (_GREXT02ACTS_PRODUCT_REQ_) //NEED _SCER11BEL_PRODUCT_REQ_ XER10 is GW..  STA is NOT needed ????
         //Disabling all vaps except STA Vaps by default in XLE
-        cfg->u.bss_info.enabled = false;
-        exists = false;
+#if defined(_WNXL11BWL_PRODUCT_REQ_)
+        // Private VAPs are forced to exist in vap_svc, so keep the default enabled value
+        if (!isVapPrivate(vap_index)) {
+#endif
+            cfg->u.bss_info.enabled = false;
+            exists = false;
+#if defined(_WNXL11BWL_PRODUCT_REQ_)
+        }
+#endif
 #endif //_WNXL11BWL_PRODUCT_REQ_ , _PP203X_PRODUCT_REQ_ , _GREXT02ACTS_PRODUCT_REQ_
     }
 
@@ -8266,6 +8275,10 @@ int wifidb_init_vap_config_default(int vap_index, wifi_vap_info_t *config,
     }
 #endif /* !defined(_WNXL11BWL_PRODUCT_REQ_) && !defined(_PP203X_PRODUCT_REQ_) && !defined(_GREXT02ACTS_PRODUCT_REQ_)*/
     rdk_config->exists = exists;
+    if (!isVapSTAMesh(vap_index)) {
+        wifi_util_info_print(WIFI_DB, "BSS_EN_TRACE %s:%d default vap_index=%d enabled=%d exists=%d\n",
+            __func__, __LINE__, vap_index, config->u.bss_info.enabled, rdk_config->exists);
+    }
     pthread_mutex_unlock(&g_wifidb->data_cache_lock);
     free(cfg);
     cfg = NULL;

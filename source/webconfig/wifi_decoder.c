@@ -1749,6 +1749,8 @@ webconfig_error_t decode_vap_common_object(const cJSON *vap, wifi_vap_info_t *va
     // Enabled
     decode_param_bool(vap, "Enabled", param);
     vap_info->u.bss_info.enabled = (param->type & cJSON_True) ? true : false;
+    wifi_util_info_print(WIFI_WEBCONFIG, "BSS_EN_TRACE %s:%d webconfig vap=%s enabled=%d\n",
+        __func__, __LINE__, vap_info->vap_name, vap_info->u.bss_info.enabled);
 
     // Broadcast SSID
     decode_param_bool(vap, "SSIDAdvertisementEnabled", param);

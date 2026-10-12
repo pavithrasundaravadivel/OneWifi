@@ -275,6 +275,9 @@ int vap_svc_start_stop(vap_svc_t *svc, unsigned int radio_index, bool enable)
                         "%s:%d VAP_EXISTS_FALSE for private vap_index=%d, treating as present\n",
                         __func__, __LINE__, vap_map->vap_array[j].vap_index);
                     tgt_rdk_vaps[tgt_vap_map->num_vaps].exists = true;
+                    if (enable) {
+                        tgt_vap_map->vap_array[tgt_vap_map->num_vaps].u.bss_info.enabled = true;
+                    }
                 }
 #endif
                 wifi_util_info_print(WIFI_CTRL,
@@ -288,6 +291,12 @@ int vap_svc_start_stop(vap_svc_t *svc, unsigned int radio_index, bool enable)
                     tgt_vap_map->vap_array[tgt_vap_map->num_vaps].u.bss_info.enabled;
                 tgt_vap_map->vap_array[tgt_vap_map->num_vaps].u.bss_info.enabled &=
                     tgt_rdk_vaps[tgt_vap_map->num_vaps].exists;
+                wifi_util_info_print(WIFI_CTRL,
+                    "BSS_EN_TRACE %s:%d start_stop enable=%d vap=%s db_enabled=%d exists=%d enabled_to_hal=%d\n",
+                    __func__, __LINE__, enable,
+                    tgt_vap_map->vap_array[tgt_vap_map->num_vaps].vap_name,
+                    enabled[tgt_vap_map->num_vaps], tgt_rdk_vaps[tgt_vap_map->num_vaps].exists,
+                    tgt_vap_map->vap_array[tgt_vap_map->num_vaps].u.bss_info.enabled);
             }
 #if !defined(_WNXL11BWL_PRODUCT_REQ_) && !defined(_PP203X_PRODUCT_REQ_) && !defined(_GREXT02ACTS_PRODUCT_REQ_)
             if(tgt_rdk_vaps[tgt_vap_map->num_vaps].exists == false) {
