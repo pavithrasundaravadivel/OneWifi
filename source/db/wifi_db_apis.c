@@ -5527,6 +5527,31 @@ void wifidb_vap_config_correction(uint8_t r_index, wifi_vap_info_map_t *l_vap_ma
     for (index = 0; index < l_vap_map_param->num_vaps; index++) {
         vap_config = &l_vap_map_param->vap_array[index];
 
+#if defined(_WNXL11BWL_PRODUCT_REQ_)
+        if (isVapPrivate(vap_config->vap_index)) {
+            char flag_path[64];
+            snprintf(flag_path, sizeof(flag_path), "/nvram/wifi/onewifi_xle_pvap_enabled_%u",
+                vap_config->vap_index);
+            // One-time: DBs created by older XLE builds stored private VAPs as disabled
+            if (access(flag_path, F_OK) != 0) {
+                if (!vap_config->u.bss_info.enabled) {
+                    wifi_util_info_print(WIFI_DB,
+                        "%s:%d: vap_index:%d stored disabled, enabling once\n", __func__,
+                        __LINE__, vap_config->vap_index);
+                    vap_config->u.bss_info.enabled = true;
+                    rdk_vap_config = get_wifidb_rdk_vaps(vap_config->radio_index);
+                    if (rdk_vap_config != NULL) {
+                        update_wifi_vap_info(vap_config->vap_name, vap_config, rdk_vap_config);
+                    }
+                }
+                FILE *flag_fp = fopen(flag_path, "a");
+                if (flag_fp != NULL) {
+                    fclose(flag_fp);
+                }
+            }
+        }
+#endif
+
         if ((isVapPrivate(vap_config->vap_index)) &&
             (access(ONEWIFI_BSS_MAXASSOC_FLAG, F_OK) != 0) &&
             (vap_config->u.bss_info.bssMaxSta != wifi_hal_cap_obj->wifi_prop.BssMaxStaAllow)) {

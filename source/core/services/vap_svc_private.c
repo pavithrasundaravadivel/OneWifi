@@ -19,7 +19,6 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <unistd.h>
 #include "stdlib.h"
 #include <sys/time.h>
 #include "vap_svc.h"
@@ -120,25 +119,6 @@ int vap_svc_private_update(vap_svc_t *svc, unsigned int radio_index, wifi_vap_in
             // A record still marked absent was created by the old XLE default (disabled), never by the user
             p_tgt_vap_map->vap_array[0].u.bss_info.enabled = true;
             enabled = true;
-        }
-        if (isVapPrivate(map->vap_array[i].vap_index)) {
-            char flag_path[64];
-            snprintf(flag_path, sizeof(flag_path), "/nvram/wifi/onewifi_xle_pvap_en_%u",
-                map->vap_array[i].vap_index);
-            // One-time: DBs created by older XLE builds stored private VAPs as disabled
-            if (access(flag_path, F_OK) != 0) {
-                if (!enabled) {
-                    wifi_util_info_print(WIFI_CTRL,
-                        "%s:%d vap_index=%d stored disabled, enabling once\n", __func__, __LINE__,
-                        map->vap_array[i].vap_index);
-                    p_tgt_vap_map->vap_array[0].u.bss_info.enabled = true;
-                    enabled = true;
-                }
-                FILE *fp = fopen(flag_path, "a");
-                if (fp != NULL) {
-                    fclose(fp);
-                }
-            }
         }
 #elif !defined(_PP203X_PRODUCT_REQ_) && !defined(_GREXT02ACTS_PRODUCT_REQ_)
         if(rdk_vap_info[i].exists == false) {
