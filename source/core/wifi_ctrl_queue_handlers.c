@@ -1286,6 +1286,11 @@ static int handle_acl_operation(int vap_index, char *mac_str, wifi_vap_info_t *v
 {
     bool success = false;
 
+    wifi_util_info_print(WIFI_CTRL, "%s:%d [ACL] vap %d mac %s %s kick_cfg_change:%d "
+        "mf_enable:%d mf_mode:%d\n", __func__, __LINE__, vap_index, mac_str,
+        is_add_operation ? "add" : "del", rdk_vap_info->kick_device_config_change,
+        vap_info->u.bss_info.mac_filter_enable, vap_info->u.bss_info.mac_filter_mode);
+
     // For delete operations, check if MAC is greylisted
     if (!is_add_operation && is_greylist_enabled(vap_index) &&
         is_mac_greylisted(vap_index, mac_str)) {

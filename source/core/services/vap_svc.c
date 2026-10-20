@@ -139,7 +139,7 @@ int update_acl_entries(wifi_vap_info_map_t *tgt_vap_map)
             if (!is_zero_mac(acl_entry->mac)) {
                 memcpy(&acl_device_mac,&acl_entry->mac,sizeof(mac_address_t));
                 to_mac_str(acl_device_mac, mac_str);
-                wifi_util_dbg_print(WIFI_CTRL, "%s:%d: calling wifi_addApAclDevice for mac %s vap_index %d\n", __func__, __LINE__, mac_str, vap_index);
+                wifi_util_info_print(WIFI_CTRL, "%s:%d: [ACL] restore from db: calling wifi_addApAclDevice for mac %s vap_index %d\n", __func__, __LINE__, mac_str, vap_index);
 #ifdef NL80211_ACL
                 if (wifi_hal_addApAclDevice(vap_index, (CHAR *) mac_str) != RETURN_OK) {
 #else
