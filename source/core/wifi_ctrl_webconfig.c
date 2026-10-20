@@ -2041,6 +2041,13 @@ int webconfig_hal_mac_filter_apply(wifi_ctrl_t *ctrl, webconfig_subdoc_decoded_d
             }
 
             if(current_config->is_mac_filter_initialized == true)  {
+                wifi_util_info_print(WIFI_MGR, "%s:%d: [ACL] subdoc_type:%d apply to vap_index:%d "
+                    "new_count:%u cur_count:%u new mf_enable:%d mf_mode:%d\n", __func__, __LINE__,
+                    subdoc_type, current_config->vap_index,
+                    new_config->acl_map ? hash_map_count(new_config->acl_map) : 0,
+                    current_config->acl_map ? hash_map_count(current_config->acl_map) : 0,
+                    data->radios[radio_index].vaps.vap_map.vap_array[vap_index].u.bss_info.mac_filter_enable,
+                    data->radios[radio_index].vaps.vap_map.vap_array[vap_index].u.bss_info.mac_filter_mode);
                 if (current_config->acl_map != NULL) {
                     current_acl_entry = hash_map_get_first(current_config->acl_map);
                     while (current_acl_entry != NULL) {
