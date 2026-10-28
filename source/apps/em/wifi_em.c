@@ -3522,7 +3522,6 @@ static int em_handle_connection_status(wifi_app_t *app, void *data)
     const em_connection_status_event_t *conn_status = (const em_connection_status_event_t *)data;
     raw_data_t rdata = { 0 };
     bus_error_t rc;
-    mac_addr_str_t sta_mac_str, bssid_str;
 
     if ((app == NULL) || (conn_status == NULL)) {
         return RETURN_ERR;

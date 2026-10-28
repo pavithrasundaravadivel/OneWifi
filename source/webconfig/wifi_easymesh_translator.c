@@ -2372,7 +2372,6 @@ webconfig_error_t translate_vap_object_to_easymesh_for_dml(webconfig_subdoc_data
     unsigned int i = 0,j = 0, k = 0, num_bss = 0, radio_index = 0;
     rdk_wifi_radio_t *radio;
     mac_address_t rmac;
-    webconfig_error_t ret = webconfig_error_none;
 
     decoded_params = &data->u.decoded;
     if (decoded_params == NULL) {
