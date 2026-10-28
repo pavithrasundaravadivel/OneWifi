@@ -2027,13 +2027,11 @@ int em_client_diag_config_to_monitor_queue(wifi_app_t *app, wifi_monitor_data_t 
     int i = 0;
 
     em_route(&route);
-#if 0
-    if (em_common_config_to_monitor_queue(app, data) != RETURN_OK) {
+    if (em_common_config_to_monitor_queue(data, &app->data.u.em_data.em_config) != RETURN_OK) {
         wifi_util_error_print(WIFI_EM, "%s:%d em Config creation failed %d\r\n", __func__, __LINE__,
             stats_type_client);
         return RETURN_ERR;
     }
-#endif
     radio_count = app->data.u.em_data.em_config.radio_metrics_policies.radio_count;
 
     for (i = 0; i < radio_count; i++) {
@@ -3522,6 +3520,7 @@ static int em_handle_connection_status(wifi_app_t *app, void *data)
     const em_connection_status_event_t *conn_status = (const em_connection_status_event_t *)data;
     raw_data_t rdata = { 0 };
     bus_error_t rc;
+    mac_addr_str_t sta_mac_str, bssid_str;
 
     if ((app == NULL) || (conn_status == NULL)) {
         return RETURN_ERR;
@@ -3534,11 +3533,11 @@ static int em_handle_connection_status(wifi_app_t *app, void *data)
         return RETURN_ERR;
     }
 
-    /*wifi_util_info_print(WIFI_EM,
+    wifi_util_info_print(WIFI_EM,
         "%s:%d: Connection Status STA=%s BSSID=%s Status=%u Reason Present=%d Reason=%u\n",
-        __func__, __LINE__, to_mac_str(conn_status->sta_mac, sta_mac_str),
-        to_mac_str(conn_status->bssid, bssid_str), conn_status->status_code,
-        conn_status->reason_code_present, conn_status->reason_code);*/
+        __func__, __LINE__, to_mac_str((unsigned char *)conn_status->sta_mac, sta_mac_str),
+        to_mac_str((unsigned char *)conn_status->bssid, bssid_str), conn_status->status_code,
+        conn_status->reason_code_present, conn_status->reason_code);
 
     rdata.data_type = bus_data_type_bytes;
     memcpy(rdata.raw_data.bytes, conn_status, sizeof(*conn_status));
