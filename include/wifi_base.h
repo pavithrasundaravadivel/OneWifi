@@ -584,9 +584,17 @@ typedef struct {
     nasta_opclass_entry_t opclass_list[MAX_NASTA_OPCLASS_ENTRIES];
 } nasta_query_t;
 
+/* Max length of a reporting device's identity string (factory serial number).
+ * Comcast serials are 18 chars; sized well above for extender/XLE/IoT senders. */
+#define WIFI_SRC_DEV_ID_LEN 64
+
 typedef struct {
     mac_addr_str_t mac_str;
     mac_addr_str_t ap_mac_str;
+    /* Identity of the device that produced this record — the factory serial
+     * number (gateway today; extender/XLE/IoT once those become senders).
+     * Stamped centrally by lq_ipc_send() just before the TLV leaves. */
+    char src_dev_id[WIFI_SRC_DEV_ID_LEN];
     unsigned int vap_index;
     unsigned int radio_index;
     int channel_utilization;
@@ -598,9 +606,6 @@ typedef struct {
     unsigned int status_code;
     int dhcp_event;
     int dhcp_msg_type;
-    char dhcp_hostname[256];
-    char dhcp_vendor_class[256];
-    char dhcp_param_list[512];
     unsigned int eapol_m1_count;
     unsigned int eapol_m2_count;
     unsigned int eapol_m3_count;
@@ -610,6 +615,8 @@ typedef struct {
     /* True only when STA_CONN (4WAY complete) has fired for this session.
      * Populated by wifi_stats_assoc_client from sta_data_t::connection_authorized. */
     bool connection_authorized;
+    /* True when vap_index belongs to a mesh backhaul VAP (vap_name prefix "mesh_backhaul"). */
+    bool is_mesh_backhaul;
 } stats_arg_t;
 
 typedef struct {
