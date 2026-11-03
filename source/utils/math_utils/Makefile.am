@@ -17,8 +17,10 @@
 # limitations under the License.
 ##########################################################################
 
-# Enable if PLATFORM_BANANAPI or LIBWEBCONFIG is set
-
+# Only built for the libwebconfig package. The main OneWifi package links against the copy in the
+# sysroot; building it in both packages installs libwifi_math_utils.so twice and breaks recipes that
+# depend on both (do_prepare_recipe_sysroot: "installed by both").
+if LIBWEBCONFIG
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 if CCSP_ARCH_ARM
@@ -59,3 +61,4 @@ libwifi_math_utils_la_LIBADD = -lrbus -lstdc++fs
 libwifi_math_utils_la_CPPFLAGS += -I${PKG_CONFIG_SYSROOT_DIR}${includedir}/opensync_headers
 #include_HEADERS =  $(top_srcdir)/source/utils/wifi_util.h
 noinst_HEADERS = $(top_srcdir)/source/utils/wifi_util.h
+endif
