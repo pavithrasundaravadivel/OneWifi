@@ -14,6 +14,8 @@
  **************************************************************************/
 
 #include <errno.h>
+#include <pthread.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,7 +27,68 @@
 #include "wifi_util.h"
 #include "run_qmgr.h"
 
+/* Factory data file holding this device's serial number, as "Serial <value>". */
+#define LQ_FACTORY_NVRAM_PATH "/tmp/factory_nvram.data"
+
 static int lq_ipc_fd = -1;
+static char lq_src_dev_id[WIFI_SRC_DEV_ID_LEN] = { 0 };
+static pthread_once_t lq_src_dev_id_once = PTHREAD_ONCE_INIT;
+
+static void lq_read_src_dev_id(void)
+{
+    char line[256];
+    FILE *fp;
+
+    fp = fopen(LQ_FACTORY_NVRAM_PATH, "r");
+    if (fp == NULL) {
+        wifi_util_error_print(WIFI_APPS, "SRC_DEV_ID %s:%d fopen(%s) failed: %s\n",
+            __func__, __LINE__, LQ_FACTORY_NVRAM_PATH, strerror(errno));
+        return;
+    }
+
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        /* Width must stay WIFI_SRC_DEV_ID_LEN - 1. */
+        if (sscanf(line, "Serial %63s", lq_src_dev_id) == 1) {
+            break;
+        }
+    }
+
+    fclose(fp);
+
+    wifi_util_info_print(WIFI_APPS,
+        "SRC_DEV_ID %s:%d onewifi source device id = '%s' (read once from %s)\n",
+        __func__, __LINE__, lq_src_dev_id, LQ_FACTORY_NVRAM_PATH);
+}
+
+const char *lq_ipc_src_dev_id(void)
+{
+    pthread_once(&lq_src_dev_id_once, lq_read_src_dev_id);
+    return lq_src_dev_id;
+}
+
+/*
+ * Stamp every stats_arg_t already serialized into `tlv_buf` with this device's
+ * identity. Done on the encoded copy (never on the caller's data) and via
+ * memcpy because the TLV payload starts at an unaligned 3-byte offset.
+ */
+static void lq_ipc_stamp_src_dev_id(uint8_t *tlv_buf, uint32_t count, size_t entry_size)
+{
+    uint8_t *value;
+    uint32_t i;
+
+    if (entry_size != sizeof(stats_arg_t) || count == 0) {
+        return;
+    }
+    if (lq_ipc_src_dev_id()[0] == '\0') {
+        return;
+    }
+
+    value = tlv_buf + sizeof(lq_tlv_t);
+    for (i = 0; i < count; i++) {
+        memcpy(value + (size_t)i * entry_size + offsetof(stats_arg_t, src_dev_id),
+               lq_src_dev_id, sizeof(lq_src_dev_id));
+    }
+}
 
 /* Close and reset the sender socket — called when a send failure indicates
  * that the receiver (wei) has restarted and its socket file was recreated. */
@@ -159,7 +222,7 @@ int lq_ipc_send(uint32_t msg_type, const void *entries,
         return -1;
     }
 
-    /* Filter: only forward events for private VAPs (private_ssid*) */
+    /* Filter: only forward events for private VAPs (private_ssid*), mesh station, or mesh backhaul */
     if (msg_type !=  LQ_IPC_MSG_REGISTER_STA && msg_type !=  LQ_IPC_MSG_UNREGISTER_STA 
      && msg_type !=  LQ_IPC_MSG_REINIT_METRICS ) {
         if (entry_size == sizeof(stats_arg_t) && count > 0 ) {
@@ -168,9 +231,10 @@ int lq_ipc_send(uint32_t msg_type, const void *entries,
                 const stats_arg_t *s = (const stats_arg_t *)entries;
                 for (uint32_t i = 0; i < count; i++) {
                     if ((is_vap_private(&mgr->hal_cap.wifi_prop, s[i].vap_index) != TRUE) &&
-                      (is_vap_mesh_sta(&mgr->hal_cap.wifi_prop, s[i].vap_index) != TRUE)   ) {
+                      (is_vap_mesh_sta(&mgr->hal_cap.wifi_prop, s[i].vap_index) != TRUE) &&
+                      (is_vap_mesh_backhaul(&mgr->hal_cap.wifi_prop, s[i].vap_index) != TRUE)   ) {
                         wifi_util_dbg_print(WIFI_APPS,
-                            "%s:%d [IPC-SEND] dropping %s: vap_index=%u is not a private/station VAP\n",
+                            "%s:%d [IPC-SEND] dropping %s: vap_index=%u is not a private/station/backhaul VAP\n",
                             __func__, __LINE__, lq_msg_type_str(msg_type), s[i].vap_index);
                         return 0;
                     }
@@ -199,15 +263,17 @@ int lq_ipc_send(uint32_t msg_type, const void *entries,
 
     int tlv_len = build_tlv(msg_type, entries, count, entry_size, buf, alloc_sz);
 
-    wifi_util_dbg_print(WIFI_APPS,
-        "%s:%d [IPC-SEND] TLV encoded: tlv_type=%s(%u) tlv_len=%d datagram_sz=%zu\n",
-        __func__, __LINE__, lq_msg_type_str(msg_type), msg_type,
-        tlv_len, (size_t)tlv_len);
-
     if (tlv_len < 0) {
          free(buf);
          return -1;
      }
+
+    lq_ipc_stamp_src_dev_id(buf, count, entry_size);
+
+    wifi_util_dbg_print(WIFI_APPS,
+        "%s:%d [IPC-SEND] TLV encoded: tlv_type=%s(%u) tlv_len=%d datagram_sz=%zu src_dev_id=%s\n",
+        __func__, __LINE__, lq_msg_type_str(msg_type), msg_type,
+        tlv_len, (size_t)tlv_len, lq_src_dev_id);
 
     ssize_t ret = -1;
     /*

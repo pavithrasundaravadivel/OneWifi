@@ -400,21 +400,21 @@ static wifi_anqp_node_t* convert_frame_data_to_anqp(int ap_index, mac_address_t 
     while (buff < (attrib+len))
     {
         if ((size_t)(end - buff) < sizeof(wifi_anqp_element_format_t)) {
-            wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Unable to parse ANQP element\n", __func__, __LINE__);
+            wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Invalid ANQP length\n", __func__, __LINE__);
             break;
         }
         anqp_info = (wifi_anqp_element_format_t *)buff;
 
         if (anqp_info->len > (size_t)(end - buff) - sizeof(wifi_anqp_element_format_t)) {
-            wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Unable to parse ANQP element\n", __func__, __LINE__);
-            break;
+             wifi_util_dbg_print(WIFI_CTRL, "%s:%d: ANQP payload exceeds frame length\n", __func__, __LINE__);
+             break;
         }
 
         if (anqp_info->info_id == wifi_anqp_element_name_vendor_specific)
         {
             anqp_hs_2_info = (wifi_hs_2_anqp_element_format_t *)buff;
             if (anqp_hs_2_info->len < ANQP_HS2_MIN_LEN) {
-                wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Unable to parse HS2.0 element\n", __func__, __LINE__);
+                wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Invalid HS2.0 length\n", __func__, __LINE__);
                 break;
             }
 
@@ -464,7 +464,7 @@ static wifi_anqp_node_t* convert_frame_data_to_anqp(int ap_index, mac_address_t 
         else if (anqp_info->info_id == wifi_anqp_element_name_query_list)
         {
             if (anqp_info->len % sizeof(unsigned short) != 0) {
-                wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Unable to parse ANQP query list\n", __func__, __LINE__);
+                wifi_util_dbg_print(WIFI_CTRL, "%s:%d: Malformed query_list\n", __func__, __LINE__);
                 break;
             }
             anqp_queries_len = anqp_info->len;

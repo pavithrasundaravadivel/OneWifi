@@ -301,6 +301,7 @@ int execute_assoc_client_stats_api(wifi_mon_collector_element_t *c_elem, wifi_mo
             copy_assocstats_dev_stats(&dev_array[i], &link_data[i].stats.dev);
             link_data[i].stats.vap_index = args->vap_index;
             link_data[i].stats.radio_index = getRadioIndexFromAp(args->vap_index);
+            link_data[i].stats.is_mesh_backhaul = is_vap_mesh_backhaul(wifi_prop, args->vap_index);
 #ifdef CONFIG_IEEE80211BE
             wifi_radio_operationParam_t *radioOperation = NULL;
 	    radioOperation = getRadioOperationParam(link_data[i].stats.radio_index);
@@ -319,12 +320,13 @@ int execute_assoc_client_stats_api(wifi_mon_collector_element_t *c_elem, wifi_mo
             wifi_util_dbg_print(WIFI_MON,
                     "%s:%d cli_SNR:%d cli_PacketsSent:%lu cli_ErrorsSent:%lu cli_LastDataDownlinkRate:%d "
                     "cli_MaxDownlinkRate=%d vap_index=%d radio_index=%d channel_utilization=%d "
-                    "radio_is_be=%d ap_mac_str=[%s]\n",
+                    "radio_is_be=%d ap_mac_str=[%s] is_mesh_backhaul=%d\n",
                     __func__, __LINE__, dev_array[i].cli_SNR, dev_array[i].cli_PacketsSent, dev_array[i].cli_ErrorsSent,
                     dev_array[i].cli_LastDataDownlinkRate, dev_array[i].cli_MaxDownlinkRate,
                     link_data[i].stats.vap_index, link_data[i].stats.radio_index,
                     link_data[i].stats.channel_utilization,
-                    link_data[i].stats.is_be, link_data[i].stats.ap_mac_str);
+                    link_data[i].stats.is_be, link_data[i].stats.ap_mac_str,
+                    link_data[i].stats.is_mesh_backhaul);
         }
     }
     events_update_clientdiagdata(num_devs, args->vap_index, dev_array);
@@ -555,6 +557,7 @@ int execute_assoc_client_stats_api(wifi_mon_collector_element_t *c_elem, wifi_mo
                             memset(disconnect_link_data, 0, sizeof(linkquality_data_t));
                             to_sta_key(sta->dev_stats.cli_MACAddress, disconnect_link_data->stats.mac_str);
                             disconnect_link_data->stats.vap_index = args->vap_index;
+                            disconnect_link_data->stats.is_mesh_backhaul = is_vap_mesh_backhaul(wifi_prop, args->vap_index);
                             bss_param = Get_wifi_object_bss_parameter(args->vap_index);
                             if (bss_param == NULL) {
                                  wifi_util_error_print(WIFI_MON, "%s:%d Failed to get bss info for vap index %d\n", __func__,
@@ -566,9 +569,9 @@ int execute_assoc_client_stats_api(wifi_mon_collector_element_t *c_elem, wifi_mo
                             }
 			    to_mac_str(bss_param->bssid, disconnect_link_data->stats.ap_mac_str);
                             wifi_util_dbg_print(WIFI_MON,
-                                "%s:%d: diag client disassociated sta mac=%s vap_index =%d ap_mac=%s\n", __func__, __LINE__,
+                                "%s:%d: diag client disassociated sta mac=%s vap_index =%d ap_mac=%s is_mesh_backhaul=%d\n", __func__, __LINE__,
                                 disconnect_link_data->stats.mac_str,disconnect_link_data->stats.vap_index,
-				 disconnect_link_data->stats.ap_mac_str);
+				 disconnect_link_data->stats.ap_mac_str, disconnect_link_data->stats.is_mesh_backhaul);
 
                             if (rf_down_mesh_sta) {
                                 apps_mgr_link_quality_event(&ctrl->apps_mgr,
@@ -612,6 +615,7 @@ int execute_assoc_client_stats_api(wifi_mon_collector_element_t *c_elem, wifi_mo
                     memset(remove_link_data, 0, sizeof(linkquality_data_t));
                     to_sta_key(tmp_sta->dev_stats.cli_MACAddress, remove_link_data->stats.mac_str);
                     remove_link_data->stats.vap_index = args->vap_index;
+                    remove_link_data->stats.is_mesh_backhaul = is_vap_mesh_backhaul(wifi_prop, args->vap_index);
                     bss_param = Get_wifi_object_bss_parameter(args->vap_index);
                     if (bss_param == NULL) {
                         wifi_util_error_print(WIFI_MON, "%s:%d Failed to get bss info for vap index %d\n", __func__,
@@ -621,8 +625,9 @@ int execute_assoc_client_stats_api(wifi_mon_collector_element_t *c_elem, wifi_mo
                         pthread_mutex_unlock(&mon_data->data_lock);
                         return RETURN_ERR;
                     }
+
 	            to_mac_str(bss_param->bssid, remove_link_data->stats.ap_mac_str);
-                    wifi_util_dbg_print(WIFI_MON, "%s:%d:  diag client disassociated  sta mac=%s vap_index:%d ap_mac=%s\n", __func__, __LINE__,remove_link_data->stats.mac_str,remove_link_data->stats.vap_index,remove_link_data->stats.ap_mac_str);
+                    wifi_util_dbg_print(WIFI_MON, "%s:%d:  diag client disassociated  sta mac=%s vap_index:%d ap_mac=%s is_mesh_backhaul=%d\n", __func__, __LINE__,remove_link_data->stats.mac_str,remove_link_data->stats.vap_index,remove_link_data->stats.ap_mac_str, remove_link_data->stats.is_mesh_backhaul);
                     apps_mgr_link_quality_event(&ctrl->apps_mgr,wifi_event_type_hal_ind, wifi_event_exec_stop, remove_link_data, 0);
                 }
             }

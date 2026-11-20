@@ -33,6 +33,7 @@
 #include "wifi_apps_mgr.h"
 #include "wifi_linkquality.h"
 #include "wifi_linkquality_libs.h"
+#include "lq_ipc_sender.h"
 #include "wifi_hal_rdk_framework.h"
 #include "wifi_monitor.h"
 #include "scheduler.h"
@@ -445,6 +446,7 @@ int link_quality_apps_auth_event(wifi_app_t *app, bool req, int sub_event,void *
     to_mac_str(msg->frame.sta_mac, affinity_arg->mac_str);
     affinity_arg->vap_index = msg->frame.ap_index;
     affinity_arg->radio_index = getRadioIndexFromAp(msg->frame.ap_index);
+    affinity_arg->is_mesh_backhaul = is_vap_mesh_backhaul(get_wifi_hal_cap_prop(), affinity_arg->vap_index);
     get_radio_channel_utilization(affinity_arg->radio_index,&affinity_arg->channel_utilization);
     affinity_arg->status_code = 0;
     bss_param = Get_wifi_object_bss_parameter(affinity_arg->vap_index);
@@ -506,6 +508,7 @@ int link_quality_apps_assoc_event(wifi_app_t *app, bool req,int sub_event,void *
     to_mac_str(msg->frame.sta_mac, affinity_arg->mac_str);
     affinity_arg->vap_index = msg->frame.ap_index;
     affinity_arg->radio_index = getRadioIndexFromAp(msg->frame.ap_index);
+    affinity_arg->is_mesh_backhaul = is_vap_mesh_backhaul(get_wifi_hal_cap_prop(), affinity_arg->vap_index);
     get_radio_channel_utilization(affinity_arg->radio_index, &affinity_arg->channel_utilization);
     bss_param = Get_wifi_object_bss_parameter(affinity_arg->vap_index);
     if (bss_param == NULL) {
@@ -616,6 +619,7 @@ int link_quality_apps_status_code_event(wifi_app_t *app, int sub_event, void *ar
     get_radio_channel_utilization(affinity_arg->radio_index, &affinity_arg->channel_utilization);
     affinity_arg->status_code = msg->reason;
     affinity_arg->event = send_event;
+    affinity_arg->is_mesh_backhaul = is_vap_mesh_backhaul(get_wifi_hal_cap_prop(), affinity_arg->vap_index);
     /* No RSSI on this path; negative keeps WEI's "cli_SNR >= 0" guard from
      * overwriting m_snr_assoc with a bogus value. */
     affinity_arg->dev.cli_SNR = -1;
@@ -658,6 +662,7 @@ int link_quality_apps_disassoc_event(wifi_app_t *app, bool req,int sub_event,voi
     affinity_arg->vap_index = msg->ap_index;
     affinity_arg->radio_index = getRadioIndexFromAp(msg->ap_index);
     get_radio_channel_utilization(affinity_arg->radio_index, &affinity_arg->channel_utilization);
+    affinity_arg->is_mesh_backhaul = is_vap_mesh_backhaul(get_wifi_hal_cap_prop(), affinity_arg->vap_index);
     /* Carry the 802.11 disconnect reason in status_code for WEI to classify. */
     affinity_arg->status_code = msg->reason;
     wifi_util_info_print(WIFI_APPS,
@@ -718,6 +723,7 @@ int link_quality_apps_assoc_device_event(wifi_app_t *app, int sub_event, void *a
     affinity_arg->dev.cli_SNR = msg->dev_stats.cli_SNR;
     affinity_arg->status_code = 0;
     affinity_arg->event = sub_event;
+    affinity_arg->is_mesh_backhaul = is_vap_mesh_backhaul(get_wifi_hal_cap_prop(), affinity_arg->vap_index);
 
     wifi_util_info_print(WIFI_APPS,
         "AUTH-ASSOC-CODE %s:%d STA FULLY CONNECTED (assoc_device) MAC=%s vap=%u radio=%u snr=%d\n",
@@ -867,6 +873,7 @@ int link_quality_init(wifi_app_t *app, unsigned int create_flag)
         return RETURN_ERR;
     }
 
+    lq_ipc_src_dev_id();
     ignite_lq_state_t *ignite = &app->data.u.linkquality.ignite;
     ignite->last_score = 0.0;
     ignite->last_threshold = 0.0;
